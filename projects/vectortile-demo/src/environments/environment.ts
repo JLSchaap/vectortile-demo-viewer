@@ -1,10 +1,26 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
-
 export const environment = {
-  production: false
-};
+  production: false,
+
+
+  BRTTop10Standaardjsonurl: urlQuad( 'https://api.pdok.nl/brt/top10nl/ogc/v1', '/brt_top10nl__', 'f=mapbox'),
+  BrkWKPBStandaardjsonurl: 'styles/brk/wkpb/wkpb_standaardvisualisatie_nederlandsRDNewQuad.json',
+  BGTmapboxachtergrondjsonurl: 'styles/bgt_achtergrondvisualisatie.json',
+  BGTmapboxstandaardjsonurl: 'styles/bgt_standaardvisualisatie.json',
+  BAGmapboxbagstd:    urlQuad('https://api.pdok.nl/kadaster/bag/ogc/v2', '/bag_standaardvisualisatie__', 'f=json'),
+  /*BAGmapboxbagstd:   "styles/bag/bag_standaardvisualisatie__netherlandsrdnewquad.json",*/ 
+  BAGmapboxbagCompleet:  urlQuad( 'https://api.pdok.nl/kadaster/bag/ogc/v2', '/bag_standaardvisualisatie_compleet__', 'f=json'),
+  /* (BAGmapboxbagCompleet:   'styles/bag/bag_standaardvisualisatie_compleet__netherlandsrdnewquad.json',*/
+    BGTmapboxtactieljsonurl: 'styles/tactielevisualisatie.json',
+  BESTUURWithLabels: 'styles/bestuurlijkegebieden_annotated.json',
+  BESTUURstd:    'https://api.pdok.nl/kadaster/bestuurlijkegebieden/ogc/v1/styles/bestuurlijkegebieden_standaardvisualisatie?f=json',
+  DKKstandaard:'styles/brk/dkk_standaardvissualisatie_nederlandsRDNewQuad.json',
+  DKKkwaliteit: 'styles/brk/dkk_kwaliteitsvissualisatie_nederlandsRDNewQuad.json',
+  BrtAchtergrondStandaard_annotated: 'styles/brt/brt_achtergrondkaart_standaard_annotated_nederlandsrdnewquad.json',
+  BrtAchtergrondStandaard: 'styles/brt/brt_achtergrondkaart_standaard_nederlandsrdnewquad.json',
+  BrtLuchtfoto_Annotation: 'styles/brt/brt_luchtfoto_annotated_nederlandsrdnewquad.json',
+  BrtAchtergrondDarkmode_annotated: 'styles/brt/brt_achtergrondkaart_darkmode_annotated_nederlandsrdnewquad.json',
+
+}
 
 /*
  * For easier debugging in development mode, you can import the following file
@@ -13,4 +29,7 @@ export const environment = {
  * This import should be commented out in production mode because it will have a negative impact
  * on performance if an error is thrown.
  */
-// import 'zone.js/plugins/zone-error';  // Included with Angular CLI.
+import 'zone.js/plugins/zone-error'; // Included with Angular CLI.import { Quad } from '../app/enumVisualisatie'
+import { urlQuad } from './urlQuad'
+
+

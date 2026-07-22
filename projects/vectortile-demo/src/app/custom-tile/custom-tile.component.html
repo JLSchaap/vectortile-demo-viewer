@@ -1,0 +1,53 @@
+<form [formGroup]="customtForm" (ngSubmit)="onSubmit()">
+  <table>
+  <tr>
+    <td><label for="showDebugLayer">Debug raster vectortiles tonen:</label></td>
+    <td><mat-slide-toggle (change)="showDebugLayer()" formControlName="showDebugLayer"></mat-slide-toggle>
+   </td>
+  </tr>
+  <tr>
+    <td><label for="showLuchtFotoLayer">Luchtfoto achtergrond gebruiken:</label></td>
+    <td><mat-slide-toggle (change)="showLuchtFotoLayer()" formControlName="showLuchtFotoLayer"></mat-slide-toggle>
+   </td>
+  </tr>
+  <tr>
+    <td><label for="showBrtLayer">BRT Standaard achtergrond gebruiken:</label></td>
+    <td><mat-slide-toggle (change)="showBrtLayer()" formControlName="showBrtLayer"></mat-slide-toggle>
+   </td>
+  </tr>
+  </table>
+
+<table>
+
+  <caption class="techcaption">
+    Aanpasbare Vectortile URL:
+  </caption>
+  <tbody>
+    <tr>
+      <td><label for="customUrlMinZoom">MinZoom:</label></td>
+      <td><input type="text" id="customUrlMinZoom" formControlName="customUrlMinZoom"/></td>
+    </tr>
+
+
+    <tr>
+      <td><label for="customUrl">URL:</label></td>
+      <td><input type="text" id="customUrl" formControlName="customUrl"/></td>
+    </tr>
+    <tr>
+      <td><label for="customTileMatrixPart">TileMatrixPart:</label></td>
+      <td><input type="text" id="customTileMatrixPart" formControlName="customTileMatrixPart"/></td>
+    </tr>
+    <tr>
+      <td><label for="customUrlxyzTemplate">xyzTemplate:</label></td>
+      <td><input type="text" id="customUrlxyzTemplate" formControlName="customUrlxyzTemplate"/></td>
+    </tr>
+    <tr>
+      <td><label for="customUrlExtension">extension:</label></td>
+      <td><input type="text" id="customUrlExtension" formControlName="customUrlExtension"/></td>
+    </tr>
+  </tbody>
+</table>
+<button type="submit">Aanpassen</button>
+<button type="reset" (click)="onReset()">Reset</button>
+
+</form>

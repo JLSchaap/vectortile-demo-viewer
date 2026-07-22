@@ -1,109 +1,114 @@
 <div class="map-container" id="map1">
-    <div class="toprightpanel">
-        <div class="topbuttons">
-            <button class="topbutton" (click)="toggleShowDetails()" type="checkbox">Toon object (aan/uit)</button>
-            <button *ngIf="hasLegend()" class="topbutton" (click)="toggleShowLegend()" type="checkbox">Toon Legenda
-                (aan/uit)</button>
-            <button class="topbutton" (click)="toggleShowDemo()" type="checkbox">Toon Demo opties (aan/uit)</button>
-        </div>
-        <div>
-            <div *ngIf="isShowDetails">
-                <div *ngIf="showselectedFeature()">
-                    <div>
-                        <app-objectinfo [feature]="this.selectedFeature" [resolution]="this.view.getResolution()"
-                            [styleFunction]="this.vectorTileLayer.getStyleFunction()">
-                        </app-objectinfo>
-                    </div>
-                </div>
-            </div>
-            <div *ngIf="hasLegend()">
-                <div class="legend" *ngIf="isShowLegend">
-                    <table>
-                        <caption class="legendtablecaption">Legenda:</caption>
-                        <thead>
-                            <th id="Veld">Waarde</th>
-                            <th id="Veld">Tonen</th>
-                            <th id="Waarde">Visualisatie</th>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Alle waarden</td>
-                                <td> <input type="checkbox" (change)="onCheckboxAllChange($event)" />
-                                <td>
-                                    <button class="leftbutton" (click)="  NewColorMap() " type="checkbox">Reset</button>
-                                </td>
+  <div class="toprightpanel">
+    <div class="topbuttons">
+      <mat-slide-toggle
+        class="check"
+        labelPosition="before"
+        [matTooltip]="
+          isShowDetails
+            ? 'Objectinformatie verbergen'
+            : 'Objectinformatie tonen'
+        "
+        aria-label="Toon object informatie"
+        [checked]="isShowDetails"
+        (click)="toggleShowDetails()"
+        >Objectinformatie</mat-slide-toggle
+      >
 
-                            </tr>
-                            <tr *ngFor="let x of colorArray() | keyvalue">
+      <mat-slide-toggle
+        class="check"
+        labelPosition="before"
+        [matTooltip]="!hasLegend() ? 'Legenda verbergen' : 'Legenda tonen'"
+        aria-label="Toon Legenda"
+        [checked]="isShowLegend"
+        (click)="toggleShowLegend()"
+        >Legenda</mat-slide-toggle
+      >
 
-                                <td>{{x.key }}</td>
-                                <td> <input type="checkbox" [checked]="x.value.show"
-                                        (change)="onCheckboxChange($event, x)" />
-                                <td>
-                                    <div *ngIf="x.value.show">
-                                        <div class="colorpick"><input [(colorPicker)]="x.value.rbgString"
-                                                [style.background]="x.value.rbgString" [cpOutputFormat]="'rgba'"
-                                                [cpAlphaChannel]="'enabled'" (colorPickerChange)="onColorChange(x)">
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div *ngIf="isShowDemo" class="row container-fluid">
-                <div class="infotextbox">
-                    <div class='demobox'>
-                        <h3>Vector tile viewer</h3>
-                        Deze viewer is gemaakt om BGT vectortiles te demonstreren
-
-                        <div class="demobox">
-                            <app-mapexport [map]="this.map1"></app-mapexport>
-                        </div>
-                        <div class='demobox'>
-                            <button (click)="DemogotoStartLocationOnMap()" type="submit">Reset (einde demo)</button>
-                        </div>
-                        <div class='demobox'>
-                            <button (click)="DemoRandomLocationToggle()" type="checkbox">{{demotextLocatie}}</button>
-                        </div>
-                        <div class='demobox'>
-                            <button (click)="DemoVisualisationToggle()"
-                                type="checkbox">{{demotextVisualisatie}}</button>
-                        </div>
-
-                        <table>
-                            <caption class="techcaption">Technische informatie:</caption>
-                            <thead>
-                                <th id="Veld">Veld</th>
-                                <th id="Waarde">Waarde</th>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Huidige Zoomlevel</td>
-                                    <td>{{getZoomLevel()}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Pixel Ratio scherm</td>
-                                    <td>{{getDevicePixelRatio()}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Vectortile api</td>
-                                    <td>{{getVectorTileUrl()}} </td>
-                                </tr>
-                                <tr>
-                                    <td>Style api</td>
-                                    <td>{{getStyleUrl()}}</td>
-                            </tbody>
-                        </table>
-
-
-
-                    </div>
-                </div>
-            </div>
-
-
-        </div>
+      <mat-slide-toggle
+        class="check"
+        labelPosition="before"
+        [matTooltip]="isShowDemo ? 'Demo menu verbergen' : 'Demo menu tonen'"
+        aria-label="Toon object informatie"
+        [checked]="isShowDemo"
+        (click)="toggleShowDemo()"
+        >Demo Menu</mat-slide-toggle
+      >
     </div>
+    <div>
+      <div *ngIf="isShowDetails">
+        <div *ngIf="showselectedFeatures()">
+          <div>
+            <app-objectinfo
+              [features]="this.selectedFeatures"
+              [resolution]="this.viewRD(zoom).getResolution()"
+              [styleFunction]="this.CurrentVectorTileLayer.getStyleFunction()!"
+              [ogcurl]="this.getOgcUrl()"
+            >
+            </app-objectinfo>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="hasLegend()">
+        <div *ngIf="isShowLegend">
+          <app-mapstyler
+            [Layer]="this.CurrentVectorTileLayer"
+            [ColorMap]="this.colorMap"
+            [StyleUrl]="getShowStyleUrl()"
+          >
+          </app-mapstyler>
+        </div>
+      </div>
+      <!--div class ='mapuntik'>
+      edit met mapuntik:<app-showlink [url]="getShowTileUrl()" ></app-showlink>
+    </div-->
+
+      <div *ngIf="isShowDemo" class="row container-fluid">
+        <div class="infotextbox">
+          <div class="demobox">
+
+            <app-demobox (visEmit)="visualisationChange($event)"> </app-demobox>
+            <app-mapexport [olMap]="this.map1"></app-mapexport>
+
+            <table>
+              <caption class="techcaption">
+                Technische informatie:
+              </caption>
+              <thead>
+                <th id="Veld">Veld</th>
+                <th id="Waarde">Waarde</th>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Huidige Zoomlevel</td>
+                  <td>{{ getZoomLevel() }}</td>
+                </tr>
+                <tr>
+                  <td>Pixel Ratio scherm</td>
+                  <td>{{ getDevicePixelRatio() }}</td>
+                </tr>
+
+                <tr>
+                  <td>Vectortile api</td>
+                  <td>
+                    <app-showlink [url]="getShowTileUrl()"></app-showlink>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Style api</td>
+                  <td>
+                    <app-showlink [url]="getShowStyleUrl()"></app-showlink>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <app-custom-tile (visEmit)="visualisationChange($event)"  (gridEmit)="visualisationRefresh()"> </app-custom-tile>
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -5,25 +5,20 @@
   "projects": {
     "vectortile-demo": {
       "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        },
-        "@schematics/angular:application": {
-          "strict": true
-        }
-      },
+      "schematics": {},
       "root": "projects/vectortile-demo",
       "sourceRoot": "projects/vectortile-demo/src",
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/vectortile-demo",
+            "allowedCommonJsDependencies": ["color-name", "pbf", "rbush"],
+            "outputPath": {
+              "base": "dist/vectortile-demo/"
+            },
             "index": "projects/vectortile-demo/src/index.html",
-            "main": "projects/vectortile-demo/src/main.ts",
-            "polyfills": "projects/vectortile-demo/src/polyfills.ts",
+            "polyfills": ["zone.js"],
             "tsConfig": "projects/vectortile-demo/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -41,10 +36,15 @@
               }
             ],
             "styles": [
+              "node_modules/ol/ol.css",
               "projects/vectortile-demo/src/styles.scss",
-              "node_modules/ol/ol.css"
+              "projects/vectortile-demo/src/theme.scss"
             ],
-            "scripts": []
+            "scripts": [
+
+
+            ],
+            "browser": "projects/vectortile-demo/src/main.ts"
           },
           "configurations": {
             "production": {
@@ -52,7 +52,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "2mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -69,9 +69,7 @@
               "outputHashing": "all"
             },
             "development": {
-              "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
@@ -80,46 +78,120 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "vectortile-demo:build:production"
+              "buildTarget": "vectortile-demo:build:production"
             },
             "development": {
-              "browserTarget": "vectortile-demo:build:development"
+              "buildTarget": "vectortile-demo:build:development"
             }
           },
           "defaultConfiguration": "development"
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
-            "browserTarget": "vectortile-demo:build"
+            "buildTarget": "vectortile-demo:build"
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:karma",
           "options": {
             "main": "projects/vectortile-demo/src/test.ts",
-            "polyfills": "projects/vectortile-demo/src/polyfills.ts",
+            "polyfills": ["projects/vectortile-demo/src/polyfills.ts"],
             "tsConfig": "projects/vectortile-demo/tsconfig.spec.json",
-            "karmaConfig": "projects/vectortile-demo/karma.conf.js",
+            "karmaConfig": "projects/vectortile-demo/karma.conf.cjs",
             "inlineStyleLanguage": "scss",
             "assets": [
               "projects/vectortile-demo/src/favicon.ico",
               "projects/vectortile-demo/src/assets"
             ],
             "styles": [
-              "projects/vectortile-demo/src/styles.scss"
+              "projects/vectortile-demo/src/styles.scss",
+              "projects/vectortile-demo/src/theme.scss"
             ],
             "scripts": []
           }
         },
         "deploy": {
           "builder": "angular-cli-ghpages:deploy"
+        },
+        "cypress-run": {
+          "builder": "@cypress/schematic:cypress",
+          "options": {
+            "devServerTarget": "vectortile-demo:serve",
+            "configFile": "projects/vectortile-demo/cypress.config.js"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "vectortile-demo:serve:production"
+            }
+          }
+        },
+        "cypress-open": {
+          "builder": "@cypress/schematic:cypress",
+          "options": {
+            "watch": true,
+            "headless": false,
+            "configFile": "projects/vectortile-demo/cypress.config.js"
+          }
+        },
+        "e2e": {
+          "builder": "@cypress/schematic:cypress",
+          "options": {
+            "devServerTarget": "vectortile-demo:serve",
+            "watch": true,
+            "headless": false
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "vectortile-demo:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/vectortile-demo/**/*.ts",
+              "projects/vectortile-demo/**/*.html"
+            ]
+          }
         }
       }
     }
   },
-  "defaultProject": "vectortile-demo"
+  "cli": {
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ],
+    "analytics": false
+  },
+  "schematics": {
+    "@schematics/angular:component": {
+      "type": "component"
+    },
+    "@schematics/angular:directive": {
+      "type": "directive"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
+    }
+  }
 }

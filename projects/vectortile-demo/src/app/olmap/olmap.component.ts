@@ -1,408 +1,761 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { Router } from '@angular/router';
-import { Feature, Map as olMap, View, } from 'ol';
-import stylefunction from 'ol-mapbox-style/dist/stylefunction'
-import { getTopLeft, getWidth } from 'ol/extent.js';
-import MVT from 'ol/format/MVT.js';
-import { Geometry } from 'ol/geom';
-import VectorTileLayer from 'ol/layer/VectorTile.js';
-import 'ol/ol.css';
+import { CommonModule } from '@angular/common'
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  ViewEncapsulation,
+} from '@angular/core'
+import { MatSlideToggle } from '@angular/material/slide-toggle'
+import { MatTooltip } from '@angular/material/tooltip'
+import { Router } from '@angular/router'
+import { Feature, Map as olMap, View } from 'ol'
+import { stylefunction } from 'ol-mapbox-style'
+import { FeatureLike } from 'ol/Feature'
+import { getTopLeft, getWidth } from 'ol/extent.js'
+import MVT from 'ol/format/MVT.js'
+import { Geometry } from 'ol/geom'
+import { DEVICE_PIXEL_RATIO } from 'ol/has'
+import Link from 'ol/interaction/Link.js'
+import TileLayer from 'ol/layer/Tile'
+import VectorTileLayer from 'ol/layer/VectorTile'
+import Projection from 'ol/proj/Projection'
+import { TileDebug, WMTS } from 'ol/source'
+import VectorTileSource from 'ol/source/VectorTile'
+import { Circle, Stroke } from 'ol/style'
+import Fill from 'ol/style/Fill'
+import Style, { StyleFunction } from 'ol/style/Style'
+import TileGrid from 'ol/tilegrid/TileGrid'
+import WMTSTileGrid from 'ol/tilegrid/WMTS'
+import { Annotation, DrawColor, getFillColor, LabelType } from '../color'
+import { ColorMap, LegendLevel } from '../colorMap'
+import { CustomTileComponent } from '../custom-tile/custom-tile.component'
+import { DemoboxComponent } from '../demobox/demobox.component'
+import { exhaustiveGuard, getStyleUrl, Visualisatie } from '../enumVisualisatie'
+import { LocalStorageService } from '../local-storage-service'
+import { LocationService, ViewLocation } from '../location.service'
+import { MapexportComponent } from '../mapexport/mapexport.component'
+import { MapstylerComponent } from '../mapstyler/mapstyler.component'
+import { ObjectinfoComponent } from '../objectinfo/objectinfo.component'
+import { ShowlinkComponent } from '../showlink/showlink.component'
+import {
+  getSpriteDataUrl,
+  getSpriteImageUrl,
+  OGCApiRootUrl,
+  tileurlBAG,
+  tileurlBestuur,
+  tileurlBGT,
+  tileurlBRTAchtergrond,
+  tileurlDKK,
+  tileurlTop10,
+  tileurlWKPB,
+  VectorTileUrl,
+} from './tileurl'
 
-import Projection from 'ol/proj/Projection';
-import VectorTileSource from 'ol/source/VectorTile.js';
-import Stroke from 'ol/style/Stroke';
-import Style, { StyleFunction } from 'ol/style/Style';
-import TileGrid from 'ol/tilegrid/TileGrid';
-import { LocationService, ViewLocation } from '../location.service';
-import { VectorTileUrl, tileurl } from './tileurl';
-import { KeyValue } from '@angular/common';
-import { getJsonurl, Visualisatie, getRandomEnumValue } from '../enumVisualisatie';
-import { DrawColor } from "../color"
-import { FeatureLike } from 'ol/Feature';
-import { DEVICE_PIXEL_RATIO } from 'ol/has';
 
-interface MapboxStyle {
-  version: number;
-  name: string;
-  id: string;
-  zoom: number;
-  pitch: number;
-  center: number[];
-  sprite: string;
-  glyphs: string;
 
-}
-
-type proprow = {
-  title: string
-  value: string
-}
-
-type styleRow = {
-  title: string
-  style: Style
-};
 
 @Component({
   selector: 'app-olmap',
   templateUrl: './olmap.component.html',
-  styleUrls: ['./olmap.component.scss']
+  styleUrls: ['./olmap.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+  imports: [CommonModule, CustomTileComponent, ShowlinkComponent, DemoboxComponent, MapexportComponent, MapstylerComponent, ObjectinfoComponent, MatSlideToggle, MatTooltip]
+
 })
-
 export class OlmapComponent implements OnInit, OnChanges {
-  @Output() titelEmit: EventEmitter<Visualisatie> = new EventEmitter();
-  color = 'geen'
-  private SelectedVisualisation: Visualisatie = Visualisatie.achtergrond;
-  @Input() set visualisation(vis: Visualisatie) {
-    this.SelectedVisualisation = vis;
 
+  @Output() titelEmit: EventEmitter<Visualisatie> = new EventEmitter();
+  private SelectedVisualisation: Visualisatie = Visualisatie.BGTachtergrond;
+  //private SelectedVisualisation: Visualisatie = Visualisatie.BRTAchtergrondStandaard
+  private stfunction: StyleFunction | undefined
+  colorMap = new ColorMap(LegendLevel.d1_layer);
+  showUrl = '';
+  zoom: number = 13;
+  //zoom: number = 2;
+  private _tileurlCustom: VectorTileUrl | undefined
+
+
+  public get tileurlCustomMinZoom(): number {
+    const minzoomString: string | null = this.localStorageService.get('customUrlMinZoom')
+
+    if (minzoomString) {
+      const minzoom: number = parseInt(minzoomString, this.zoom)
+
+      if (!isNaN(minzoom)) {
+        return minzoom
+      }
+    }
+
+    return 0
   }
-  colorMap = new Map<string, DrawColor>();
-  newcolorMap = new Map<string, DrawColor>();
-  vectorTileLayer = new VectorTileLayer(
-    {
-      renderMode: 'hybrid',
-      declutter: true,
-      useInterimTilesOnError: false
-    })
+
+
+
+  public get tileurlCustom(): VectorTileUrl | undefined {
+    const url = this.localStorageService.get('customUrl')
+    let extension = this.localStorageService.get('customUrlExtension')
+    if (!extension) {
+      extension = '.pbf'
+    }
+    let xyzTemplate = this.localStorageService.get('customUrlxyzTemplate')
+    if (!xyzTemplate) {
+      xyzTemplate = '/{z}/{y}/{x}'
+    }
+
+    let tileMatrixPart = this.localStorageService.get('customTileMatrixPart')
+    if (!tileMatrixPart) {
+      tileMatrixPart = '/NetherlandsRDNewQuad'
+    }
+
+    if (url) {
+      const VTurl: VectorTileUrl = { vectorTileUrl: url, tileMatrixPart: tileMatrixPart, xyzTemplate: xyzTemplate, extension: extension, ogcApiRootUrl: undefined }
+      return VTurl
+    }
+    return undefined
+  }
+
+  private ogcUrl: OGCApiRootUrl
+
+
+  @Input() set visualisation(vis: Visualisatie) {
+    this.SelectedVisualisation = vis
+    this.colorMap.setSelector(LegendLevel.d1_layer)
+  }
+
+  public vectorTileLayerRD = new VectorTileLayer({
+    renderMode: 'hybrid',
+    declutter: true,
+    useInterimTilesOnError: false,
+  });
+
+
+
+  CurrentVectorTileLayer: VectorTileLayer = this.vectorTileLayerRD;
+
   readonly rdProjection: Projection = new Projection({
     code: 'EPSG:28992',
-    extent: [-285401.92, 22598.08, 595401.92, 903401.92]
+    extent: [-285401.92, 22598.08, 595401.92, 903401.92],
   });
 
-  view: View = new View({
-    projection: this.rdProjection,
-    center: [155000, 463000],
-    zoom: 13,
-    minZoom: 13
+  /*
+  readonly WGS84Projection: Projection = new Projection({
+    code: 'EPSG:3857',
+    extent: [3.2, 50.75, 7.22, 53.7]
   });
+  */
 
-  map1: olMap = new olMap({
-    layers: [this.vectorTileLayer],
-    target: 'map1',
-    view: this.view
-  });
   resolutions: Array<number> = [];
   matrixIds: Array<string> = [];
 
-  public selectedFeature: Feature<Geometry> | undefined;
 
 
 
-  public selectedFeatures: [Feature<Geometry>] | undefined = undefined;
-  currentlocation: ViewLocation | undefined;
-  stylerows: Array<styleRow> | undefined;
-  isShowDetails: boolean = false;
-  isShowLegend: boolean = false;
-  isShowDemo: boolean = false;
-  isDemoLocatieRotate: boolean = false;
-  isDemoVisualisatieRotate: boolean = false;
 
-  demotextLocatieAan: string = 'Willekeurige locatie roulerend (aan)';
-  demotextLocatieUit: string = 'Willekeurige locatie roulerend (uit)';
-  demotextLocatie = this.demotextLocatieAan
+  map1: olMap = new olMap({
+    layers: [this.vectorTileLayerRD], //, this.vectorTileLayerRD],
+    target: 'map1',
+    view: this.viewRD(this.zoom),
+  });
 
-  demotextVisualisatieAan: string = 'Willekeurige visualisatie roulerend (aan)';
-  demotextVisualisatieUit: string = 'Willekeurige visualisatie roulerend (uit)';
-  demotextVisualisatie = this.demotextVisualisatieAan
 
-  detailsupdate: boolean = true;
 
-  constructor(private router: Router, private locationService: LocationService) {
 
+
+
+
+  //public selectedFeature: Feature<Geometry> | undefined;
+
+  public selectedFeatures: FeatureLike[] = [];
+  currentlocation: ViewLocation | undefined
+
+  isShowDetails = false;
+  isShowLegend = false;
+  isShowDemo = false;
+
+  detailsupdate = true;
+
+  viewRD(minZoom: number): View {
+    return new View({
+      projection: this.rdProjection,
+      center: [155000, 463000],
+      zoom: minZoom,
+      minZoom: minZoom,
+      enableRotation: false,
+    })
   }
 
-  ngOnInit(): void {
-    this.locationService.currentLocation.subscribe(currentLocation => {
-      this.currentlocation = currentLocation;
-      let cview = this.map1.getView();
-      if (currentLocation.view) {
-        cview.setCenter(currentLocation.view.getCenter());
-      }
-    });
-    this.calcMatrixAndResolutions(this.rdProjection);
-    this.resolutions = this.getResolutionsVt(11)
-    this.map1 = new olMap({
-      layers: [this.vectorTileLayer],
-      target: 'map1',
-      view: this.view
+  constructor(
+    private router: Router,
+    private locationService: LocationService,
+    private localStorageService: LocalStorageService
+  ) { }
 
+  ngOnInit(): void {
+    this.locationService.currentLocation.subscribe((currentLocation) => {
+      this.currentlocation = currentLocation
+      const cview = this.map1.getView()
+      if (currentLocation.view) {
+        cview.setCenter(currentLocation.view.getCenter())
+      }
+    })
+    this.calcMatrixAndResolutions(this.rdProjection)
+    this.map1 = new olMap({
+      layers: [this.vectorTileLayerRD],
+      target: 'map1',
+      view: this.viewRD(this.zoom),
+    })
+    this.map1.addInteraction(new Link())
+
+    this.map1.on(['moveend'], () => {
+      this.locationService.changeView(this.map1.getView())
     })
 
-    const that = this;
-    this.map1.on(['moveend'], function (event) {
-      that.locationService.changeView(that.map1.getView());
-    });
+    this.map1.on(['click', 'pointermove'], (event) => {
+      let found = false
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const e = event as any
 
-    this.map1.on(['click', 'pointermove'], function (event) {
-      const e = event as any;
-      const that2 = that;
-      if (that.detailsupdate) {
-        that.vectorTileLayer.getFeatures(e.pixel).then(function (features) {
-          if (!features.length) {
-            that2.selectedFeature = undefined;
-            return;
+      if (this.detailsupdate) {
+        this.selectedFeatures = []
+        this.map1.forEachFeatureAtPixel(e.pixel, (feature) => {
+          if (feature) {
+            found = true
+            this.selectedFeatures.push(feature)
           }
-          let feature = features[0];
-          if (!feature) {
-            return;
-          }
-          that2.selectedFeatures = features as [Feature<Geometry>];
-          that2.selectedFeature = feature;
-        });
+        })
       }
       if (event.type == 'click') {
-        that.detailsupdate = !that.detailsupdate;
+        this.detailsupdate = !this.detailsupdate
       }
-    })
 
-    this.setTileSource(this.rdProjection, this.vectorTileLayer);
+      this.map1.getTargetElement().style.cursor =
+        found && this.detailsupdate ? 'pointer' : ''
+    })
+    this.dolayers
+
   }
 
   ngOnChanges(): void {
-    this.changeStyleJson(this.vectorTileLayer, this.resolutions);
+    this.changeStyleJson()
   }
 
   toggleShowDetails() {
-    this.isShowDetails = !this.isShowDetails;
+    this.isShowDetails = !this.isShowDetails
+    this.detailsupdate = this.isShowDetails
   }
 
   toggleShowLegend() {
-    this.isShowLegend = !this.isShowLegend;
+    this.isShowLegend = !this.isShowLegend
   }
 
   toggleShowDemo() {
-    this.isShowDemo = !this.isShowDemo;
+    this.isShowDemo = !this.isShowDemo
   }
 
   hasLegend() {
-    return (this.colorMap.size > 0);
+    return this.colorMap.items.size > 0
   }
 
   getZoomLevel() {
-    let view = this.map1.getView();
-    return (view.getZoom()?.toFixed(1));
+    const view = this.map1.getView()
+    return view.getZoom()?.toFixed(1)
   }
 
   getDevicePixelRatio() {
-    const ratio = DEVICE_PIXEL_RATIO;
-    return ratio;
-  }
-
-  getStyleUrl() {
-  return (window.location.href +  getJsonurl(this.SelectedVisualisation))
+    return DEVICE_PIXEL_RATIO
   }
 
   getResolutionsVt(z = 9) {
-    return this.getMatrixIdsVt(z).map(x => 3440.64 / 2 ** (x))
+    return this.getMatrixIdsVt(z).map((x) => 3440.64 / 2 ** x)
   }
 
   getMatrixIdsVt(z = 9) {
-    return Array(z + 1).fill(null).map((x, i) => i)
+    return Array(z + 1)
+      .fill(null)
+      .map((x, i) => i)
   }
 
   private calcMatrixAndResolutions(rdProjection: Projection) {
-    const tileSizePixels = 256;
-    const tileSizeMtrs = getWidth(rdProjection.getExtent()) / tileSizePixels;
-    for (let i = 0; i <= 15; i++) {
-      this.matrixIds[i] = i.toString();
-      this.resolutions[i] = tileSizeMtrs / Math.pow(2, i);
+    const tileSizePixels = 256
+    const tileSizeMtrs = getWidth(rdProjection.getExtent()) / tileSizePixels
+    for (let i = 0; i <= 20; i++) {
+      this.matrixIds[i] = i.toString()
+      this.resolutions[i] = tileSizeMtrs / Math.pow(2, i)
     }
   }
 
-
-
-  getFillColor(feature: Feature<Geometry>) {
-    var mpstyle = this.vectorTileLayer.getStyleFunction();
-    var reso = this.view.getResolution();
-    const st = mpstyle!(feature, reso!);
-    var color: string | number[] | CanvasGradient | CanvasPattern = "";
+  getFillColor(feature: Feature<Geometry>, layer: VectorTileLayer, view: View) {
+    const mpstyle = layer.getStyleFunction()
+    const reso = view.getResolution()
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const st = mpstyle!(feature, reso!)
+    let color: string | number[] | CanvasGradient | CanvasPattern = ''
 
     if (st instanceof Array) {
-      const fill = st[st.length - 1].getFill();
-      color = fill.getColor() as string;
-    }
-    else {
-      var stStyle = st as any;
-      var colcolor = stStyle.fill_.color_ as string | number[] | CanvasGradient | CanvasPattern
-      color = colcolor;
+      const fill = st[st.length - 1].getFill()
+      if (fill) {
+        color = fill.getColor() as string
+      }
+    } else {
+      const stStyle = st as Style
+      const fill = stStyle.getFill()
+      const colcolor = fill ? fill.getColor() as
+        | string
+        | number[]
+        | CanvasGradient
+        | CanvasPattern
+        : ''
+      color = colcolor
     }
 
     if (color instanceof CanvasPattern) {
-      var canvas = true;
+      // const canvas = true
       // not yet implemented boomgaard
     }
 
-    return (color);
+    return color
   }
 
-  private changeStyleJson(vectorTileLayer: VectorTileLayer, resolutions: number[]) {
-    this.titelEmit.emit(this.SelectedVisualisation);
-    var StyleJson = getJsonurl(this.SelectedVisualisation)
-    this.colorMap.clear();
-    if (StyleJson !== '') {
-      fetch(StyleJson).then((response) => {
+  visualisationChange(data: Visualisatie) {
+    this.SelectedVisualisation = data
+    this.changeStyleJson()
+  }
+
+  visualisationRefresh() {
+
+    this.changeStyleJson()
+  }
+
+  private changeStyleJson() {
+
+    this.dolayers
+
+
+
+
+
+
+    let minzoom = this.zoom
+
+    switch (this.SelectedVisualisation) {
+      case Visualisatie.BESTUURBlanko:
+      // fallsthrough
+      case Visualisatie.BESTUURWithLabels:
+      //  case Visualisatie.BESTUURLabelOnly:
+      // fallsthrough
+      case Visualisatie.BRTAchtergrondStandaard:
+      case Visualisatie.BRTAchtergrondStandaard_Annotated:
+      case Visualisatie.BRTLuchtfoto_Annotation:
+      case Visualisatie.BRTStandaardDarkmode_Annotation:
+      case Visualisatie.BRTAchtergrondStandaard_blanco:
+      case Visualisatie.BRTAchtergrondStandaard_kleurrijk:
+      case Visualisatie.BRTAchtergrondStandaard_tegels:
+
+
+        minzoom = 0
+        break
+      case Visualisatie.BESTUURstd:
+         case Visualisatie.Wkpb_blanco:
+      case Visualisatie.Wkpb_kleurrijk:
+      case Visualisatie.Wkpb_standaard:
+      case Visualisatie.Wkpb_tegels:
+
+        minzoom = 3
+        break
+      case Visualisatie.Bagstd:
+      case Visualisatie.BagCompleet:
+      case Visualisatie.BagKleurrijk_tegels:
+      case Visualisatie.Bagkleurrijk:
+      case Visualisatie.Bagblanko:
+      case Visualisatie.BGTstandaard:
+      case Visualisatie.BGTachtergrond:
+      case Visualisatie.BGTzerodefaultA_blanco:
+      case Visualisatie.BGTzerodefaultB_tegels:
+      case Visualisatie.BGTzerodefaultC_Bron:
+      case Visualisatie.BGTzerodefaultD_kleur:
+
+      case Visualisatie.DKKKwaliteit:
+      case Visualisatie.DKKStandaard:
+        minzoom = 12.01
+        break
+      case Visualisatie.Custom1Blanko:
+      case Visualisatie.Custom1Kleurrijk:
+      case Visualisatie.Custom1Tegels:
+        minzoom = this.tileurlCustomMinZoom
+        break
+
+      case Visualisatie.Top10nlBlanco:
+      case Visualisatie.Top10nlKleurrijk:
+      case Visualisatie.Top10nlStandaard:
+      case Visualisatie.Top10nlTegels:
+        minzoom = 9.05
+        break
+
+      default: {
+        exhaustiveGuard(this.SelectedVisualisation)
+        break
+      }
+    }
+
+    this.calcMatrixAndResolutions(this.rdProjection)
+    this.map1.setView(this.viewRD(minzoom))
+    this.titelEmit.emit(this.SelectedVisualisation)
+    const vectorTileLayer = this.vectorTileLayerRD
+    const resolutions = this.resolutions
+    this.map1.setView(this.viewRD(minzoom))
+    vectorTileLayer.setVisible(true)
+    const JsonUrl = getStyleUrl(this.SelectedVisualisation, 'netherlandsrdnewquad')
+
+    if (this.tileurlCustom) {
+      if (JsonUrl.source == 'custom') {
+        this.setTileSource(
+          this.rdProjection,
+          this.vectorTileLayerRD,
+          this.tileurlCustom,
+          minzoom
+        )
+        this.showUrl = this.tileurlCustom.vectorTileUrl
+      }
+
+
+    }
+
+
+    if (JsonUrl.source == 'bag') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlBAG,
+        12
+      )
+      this.showUrl = tileurlBAG.vectorTileUrl
+    }
+    if (JsonUrl.source == 'bgt') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlBGT,
+        12
+      )
+      this.showUrl = tileurlBGT.vectorTileUrl
+    }
+    if (JsonUrl.source == 'bestuurlijkegebieden') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlBestuur,
+        2
+      )
+      this.showUrl = tileurlBestuur.vectorTileUrl
+    }
+
+    if (JsonUrl.source == 'brt') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlBRTAchtergrond,
+        0
+      )
+      this.showUrl = tileurlBRTAchtergrond.vectorTileUrl
+    }
+    if (JsonUrl.source == 'wkpb') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlWKPB,
+        1
+      )
+      this.showUrl =  tileurlWKPB.vectorTileUrl
+    }
+
+    if (JsonUrl.source == 'top10nl') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlTop10,
+        11
+      )
+      this.showUrl = tileurlTop10.vectorTileUrl
+    }
+    if (JsonUrl.source == 'dkk') {
+      this.setTileSource(
+        this.rdProjection,
+        this.vectorTileLayerRD,
+        tileurlDKK,
+        12
+      )
+      this.showUrl = tileurlDKK.vectorTileUrl
+    }
+
+    if (JsonUrl.styleUrl) {
+      fetch(JsonUrl.styleUrl).then((response) => {
         response.json().then((glStyle) => {
-          //  const pixelRatio = this.map1..pixelRatio; 
-          const mapbox: MapboxStyle = glStyle;
-          //  const spriteUrl =mapbox.sprite + (pixelRatio > 1 ? '@2x' : '') + '.json';
-          // const spriteImageUrl =mapbox.sprite + (pixelRatio > 1 ? '@2x' : '') + '.png';
-          //    const font = 
+          //if you just want simply apply on style use "
+          //import { applyStyle } from 'ol-mapbox-style';
+          // applyStyle(vectorTileLayer, glStyle, "bgt", undefined, resolutions);
+          //"instead of the following:
+          if (glStyle.sprite) {
+            fetch(getSpriteDataUrl(glStyle.sprite)).then((response2) => {
+              response2.json().then((spritedata) => {
+                const imageUrl = getSpriteImageUrl(glStyle.sprite)
 
-
-          //if you just want simply apply on style use "applyStyle(vectorTileLayer, glStyle, "bgt", undefined, resolutions); "
-          //instead of the following: 
-          var stfunction = stylefunction(vectorTileLayer, glStyle, "bgt", resolutions, mapbox.sprite, mapbox.glyphs) as StyleFunction;
-          this.collectLayers(vectorTileLayer, stfunction);
-        });
-      });
-
-    }
-    else {
-      if (this.SelectedVisualisation === Visualisatie.zerodefaultA) {
-        vectorTileLayer.setStyle();
-      }
-      else {
-        this.collectLayers(vectorTileLayer, vectorTileLayer.getStyleFunction());
-      }
-    }
-  }
-
-  clearColorMap() {
-    this.colorMap.clear();
-  }
-
-  private collectLayers(vectorTileLayer: VectorTileLayer, stfunction: StyleFunction | undefined) {
-    var that = this;
-    var font = "";
-    const style = (feature: { getGeometry: () => any; getProperties: () => any; }) => {
-      const geometry = feature.getGeometry();
-      const prop = feature.getProperties();
-      var color: DrawColor | undefined = undefined;
-      var featurelabeltext = { text: "", rotation: 0 };
-      switch (that.SelectedVisualisation) {
-        case Visualisatie.standaard:
-        case Visualisatie.achtergrond:
-          var colorprop = 'layer'
-          BGTlabeltexthandling(prop, colorprop, featurelabeltext);
-          if (stfunction) {
-            var tmpstyle = stfunction(feature as FeatureLike, this.view.getResolution()!);
-            if (that.colorMap.has(prop[colorprop])) {
-              var color = that.colorMap.get(prop[colorprop]);
-              if (color!.show) {
-                if (color!.mapbox) {
-                  return tmpstyle;
-                }
-              }
-            }
-
-            else {
-              var newcolor = new DrawColor(prop[colorprop], geometry, '', true);
-              if (tmpstyle) {
-                var stylearray = tmpstyle as Style[];
-                var fill = stylearray[0].getFill()
-
-                if (fill) {
-                  var fillcolor = fill.getColor();
-                  newcolor.rbgString = fillcolor as string;
-                  that.colorMap.set(prop[colorprop], newcolor)
-                }
-                else {
-                  newcolor.rbgString = 'rgba(225,255,255,0)'
-                  that.colorMap.set(prop[colorprop], newcolor)
-
-                }
-              }
-              return tmpstyle;
-            }
+                this.stfunction = stylefunction(
+                  vectorTileLayer,
+                  glStyle,
+                  JsonUrl.source,
+                  resolutions,
+                  spritedata,
+                  imageUrl
+                ) as StyleFunction
+                //use applyStyle(vectorTileLayer, glStyle, "bgt", undefined, resolutions);
+                vectorTileLayer.setStyle(this.doStyle.bind(this) as StyleFunction)
+              })
+            })
+          } else {
+            this.stfunction = stylefunction(
+              vectorTileLayer,
+              glStyle,
+              JsonUrl.source,
+              resolutions
+            ) as StyleFunction
+            //use applyStyle(vectorTileLayer, glStyle, "bgt", undefined, resolutions);
+            vectorTileLayer.setStyle(this.doStyle.bind(this) as StyleFunction)
           }
-          break;
-
-        case Visualisatie.zerodefaultB:
-          color = new DrawColor("default zero", geometry);
-          break;
-
-        case Visualisatie.zerodefaultC_Bron:
-          var colorprop = 'bronhouder';
-          {
-            if (that.colorMap.has(prop[colorprop])) {
-              color = that.colorMap.get(prop[colorprop]);
-            }
-
-            else {
-              var newcolor = new DrawColor(prop[colorprop], geometry);
-              that.colorMap.set(prop[colorprop], newcolor)
-              color = newcolor;
-            }
-          }
-          break;
-
-        case Visualisatie.zerodefaultD:
-          {
-            var colorprop = 'layer'
-            BGTlabeltexthandling(prop, colorprop, featurelabeltext);
-            if (that.colorMap.has(prop[colorprop])) {
-              color = that.colorMap.get(prop[colorprop]);
-            }
-            else {
-              var newcolor = new DrawColor(prop[colorprop], geometry);
-              that.colorMap.set(prop[colorprop], newcolor)
-              color = newcolor;
-            }
-          }
-          break;
-        default:
-          {
-            var colorprop = 'layer'
-            if (that.colorMap.has(prop[colorprop])) {
-            }
-            else {
-              var newcolor = new DrawColor(prop[colorprop], geometry);
-              that.colorMap.set(prop[colorprop], newcolor)
-
-            }
-            return (vectorTileLayer.getStyle());
-          }
-
-      }
-      return color!.style(featurelabeltext, font);
-    }
-    vectorTileLayer.setStyle(style as any);
-
-    function BGTlabeltexthandling(prop: any, colorprop: string, featurelabeltext: { text: string; rotation: number; }) {
-      if (prop[colorprop] === 'pand_nummeraanduiding') {
-        featurelabeltext.text = prop['tekst'];
-        var deg = prop['hoek'];
-        featurelabeltext.rotation = (deg * Math.PI) / 180.0;
-      }
-      if (prop[colorprop] === 'openbareruimtelabel') {
-        featurelabeltext.text = prop['openbareruimtenaam'];
-        var deg = prop['hoek'];
-        featurelabeltext.rotation = (deg * Math.PI) / 180.0;
-      }
-    }
-  }
-
-  setimageline(vectorlayer: any) {
-    var style = [
-      new Style({
-        stroke: new Stroke({
-          color: 'blue',
-          width: 4
-        })
-      }),
-      new Style({
-        stroke: new Stroke({
-          color: 'red',
-          width: 2
+          // end of apply
         })
       })
-    ]
-    vectorlayer.setStyle(style);
+    } else {
+      switch (this.SelectedVisualisation) {
+        case Visualisatie.Custom1Blanko:
+        case Visualisatie.BESTUURBlanko:
+        case Visualisatie.Bagblanko:
+        case Visualisatie.BRTAchtergrondStandaard_blanco:
+        case Visualisatie.BGTzerodefaultA_blanco:
+        case Visualisatie.Top10nlBlanco:
+        case Visualisatie.Wkpb_blanco:
+
+          vectorTileLayer.setStyle(this.GetBlancoDefaultStyle())
+          break
+
+        /*
+           case Visualisatie.Bagstd:
+
+             if (vectorTileLayer.getSource()) {
+               this.map1.setView(this.viewRD)
+               vectorTileLayer.setStyle();
+               vectorTileLayer.setVisible(true);
+               vectorTileLayer.getSource()!.changed();
+
+
+             }
+             else {
+               throw new Error("currentlayer not found");
+             }
+
+             */
+
+        default:
+          vectorTileLayer.setStyle(this.doStyle.bind(this) as StyleFunction)
+          break
+      }
+    }
   }
 
+  private toBraile(instring: LabelType): LabelType {
+    return {
+      text: instring.text
+        .toUpperCase()
+        .split('')
+        .map(
+          (c) =>
+            '⠀⠁⠂⠃⠄⠅⠆⠇⠈⠉⠊⠋⠌⠍⠎⠏⠐⠑⠒⠓⠔⠕⠖⠗⠘⠙⠚⠛⠜⠝⠞⠟⠠⠡⠢⠣⠤⠥⠦⠧⠨⠩⠪⠫⠬⠭⠮⠯⠰⠱⠲⠳⠴⠵⠶⠷⠸⠹⠺⠻⠼⠽⠾⠿'[
+            ' A1B\'K2L@CIF/MSP"E3H9O6R^DJG>NTQ,*5<-U8V.%[$+X!&;:4\\0Z7(_?W]#Y)='.indexOf(
+              c
+            )
+            ]
+        )
+        .join(''),
+      font: 'bold 40px Courier New',
+      rotation: instring.rotation,
+      backgroundfill: new Fill({ color: 'white' }),
+    }
+  }
 
-  getVectorTileSource(projection: Projection) {
+  doStyle(feature: Feature<Geometry>, resolution: number) {
+    const prop = feature.getProperties()
+    const isText = GetLabelAnnotation(prop, prop['layer'])
+    switch (this.SelectedVisualisation) {
+      // case Visualisatie.BGTtactiel:
+      case Visualisatie.BRTAchtergrondStandaard:
+      case Visualisatie.BRTAchtergrondStandaard_Annotated:
+      case Visualisatie.BRTLuchtfoto_Annotation:
+      case Visualisatie.BRTStandaardDarkmode_Annotation:
+      case Visualisatie.DKKStandaard:
+      case Visualisatie.DKKKwaliteit:
+      case Visualisatie.Top10nlStandaard:
+      case Visualisatie.BGTstandaard:
+      case Visualisatie.BGTachtergrond:
+      case Visualisatie.Bagstd:
+      case Visualisatie.BagCompleet:
+      case Visualisatie.BESTUURWithLabels:
+      case Visualisatie.BESTUURstd:
+      case Visualisatie.Wkpb_standaard:
+        {
+          const legendTitle = this.colorMap.selector(prop)
+
+          //   if (this.SelectedVisualisation === Visualisatie.BGTtactiel && isText) {
+          //    isText = this.toBraile(isText);
+          //  }
+
+          if (this.stfunction) {
+            const tmpstyle = this.stfunction(feature, resolution)
+
+            if (this.colorMap.has(legendTitle)) {
+              const exitingColor = this.colorMap.get(legendTitle)
+              if (exitingColor?.show) {
+                return exitingColor.showfreshstyle(isText, tmpstyle)
+              }
+            } else {
+              //set style
+
+              const newcolor = new DrawColor(legendTitle, feature, true, isText)
+              // if (
+              //  this.SelectedVisualisation === Visualisatie.BGTtactiel &&
+              //  isText
+              //  ) {
+              //   newcolor.mapbox = false
+              //}
+              // console.log(tmpstyle)
+              if (tmpstyle) {
+                newcolor.rbgString = getFillColor(tmpstyle) as string
+                this.colorMap.set(legendTitle, newcolor)
+              }
+
+              return tmpstyle
+            }
+          }
+          break
+        }
+      case Visualisatie.BagKleurrijk_tegels:
+      case Visualisatie.Top10nlTegels:
+      case Visualisatie.BGTzerodefaultB_tegels:
+      case Visualisatie.Custom1Tegels:
+      case Visualisatie.BRTAchtergrondStandaard_tegels:
+      case Visualisatie.Wkpb_tegels:
+        return new DrawColor(
+          'default zero',
+          feature,
+          false,
+          false
+        ).showfreshstyle(isText)
+      case Visualisatie.BGTzerodefaultC_Bron: {
+        // const colorprop = 'bronhouder';
+        const bronLegendTitle = this.colorMap.selectorBron(prop)
+
+        let zcolor: DrawColor
+        {
+          if (this.colorMap.has(bronLegendTitle)) {
+            zcolor = this.colorMap.get(bronLegendTitle)!
+          } else {
+            const newbroncolor = new DrawColor(
+              bronLegendTitle,
+              feature,
+              false,
+              false
+            )
+            this.colorMap.set(bronLegendTitle, newbroncolor)
+            zcolor = newbroncolor
+          }
+        }
+        return zcolor.showfreshstyle(isText)
+      }
+      case Visualisatie.Bagkleurrijk:
+      case Visualisatie.BRTAchtergrondStandaard_kleurrijk:
+      case Visualisatie.Top10nlKleurrijk:
+      case Visualisatie.BGTzerodefaultD_kleur:
+      case Visualisatie.Wkpb_kleurrijk:
+      case Visualisatie.Custom1Kleurrijk: {
+        const layer = prop['layer']
+        const zerodefaultText = GetLabelAnnotation(prop, layer)
+        if (this.colorMap.has(layer)) {
+          return this.colorMap.get(layer)?.showfreshstyle(zerodefaultText)
+        } else {
+          const newcolor = new DrawColor(
+            layer,
+            feature,
+            false,
+            zerodefaultText
+          )
+          this.colorMap.set(layer, newcolor)
+          return newcolor.showfreshstyle(zerodefaultText)
+        }
+      }
+
+      case Visualisatie.Bagblanko:
+      case Visualisatie.BRTAchtergrondStandaard_blanco:
+      case Visualisatie.Custom1Blanko:
+      case Visualisatie.BGTzerodefaultA_blanco:
+      case Visualisatie.Top10nlBlanco:
+      case Visualisatie.BESTUURBlanko:
+      case Visualisatie.Wkpb_blanco:
+        return new DrawColor(
+          'default zero',
+          feature,
+          false,
+          false
+        ).showfreshstyle(isText)
+
+      default: {
+        exhaustiveGuard(this.SelectedVisualisation)
+      }
+    }
+
+    function GetLabelAnnotation(prop: Record<string, unknown>, layer: string): Annotation {
+      let text = ''
+      if (layer === 'pand_nummeraanduiding') {
+        text = prop['tekst'] as string
+      }
+      if (layer === 'perceel_label') {
+        text = prop['perceelnummer'] as string
+      }
+      if (layer === 'openbareruimtelabel') {
+        text = prop['openbareruimtenaam'] as string
+      }
+
+      if (text !== '') {
+        const deg = prop['hoek'] as number
+        const rot = ((360 - deg) * Math.PI) / 180.0
+        if (rot) {
+          const anno: LabelType = {
+            text,
+            rotation: rot,
+            font: '',
+            backgroundfill: new Fill({ color: 'white' })
+          }
+          return anno
+        } else {
+          const anno: LabelType = {
+            text,
+            rotation: 0,
+            font: '',
+            backgroundfill: new Fill({ color: 'white' })
+          }
+          return anno
+        }
+      }
+      else {
+        return false
+      }
+    }
+  }
+  getVectorTileSource(
+    projection: Projection,
+    tileEndpoint: VectorTileUrl,
+    zoom: number
+  ) {
     this.resolutions = this.getResolutionsVt(12)
     return new VectorTileSource({
       format: new MVT(),
@@ -411,121 +764,193 @@ export class OlmapComponent implements OnInit, OnChanges {
         extent: projection.getExtent(),
         resolutions: this.resolutions,
         tileSize: [256, 256],
-        origin: getTopLeft(projection.getExtent())
+        origin: getTopLeft(projection.getExtent()),
       }),
-      url: this.getVectorTileUrl(),
-      cacheSize: 0
+      url: this.getVectorTileUrl(tileEndpoint),
+      cacheSize: 0,
     })
   }
 
-  getVectorTileUrl() {
-    let tileEndpoint: VectorTileUrl = tileurl;
-    return `${tileEndpoint.url}/{z}/{x}/{y}${tileEndpoint.extension}`;
+  getVectorTileUrl(tileurl: VectorTileUrl) {
+    return `${tileurl.vectorTileUrl}${tileurl.tileMatrixPart}${tileurl.xyzTemplate}${tileurl.extension}`
   }
 
-  setTileSource(projection: Projection, vectorTileLayer: VectorTileLayer) {
-  
-    let vtSource = this.getVectorTileSource(projection)
+  getShowTileUrl() {
+    return this.showUrl
+  }
+
+  getShowStyleUrl() {
+    const url = getStyleUrl(this.SelectedVisualisation, 'netherlandsrdnewquad').styleUrl
+    if (url) {
+      return url
+    } else {
+      {
+        return ''
+      }
+    }
+  }
+
+
+  setTileSource(
+    projection: Projection,
+    vectorTileLayer: VectorTileLayer,
+    tileEndpoint: VectorTileUrl,
+    zoom: number
+  ) {
+    const vtSource = this.getVectorTileSource(projection, tileEndpoint, zoom)
+    this.ogcUrl = tileEndpoint.ogcApiRootUrl
+    if (this.ogcUrl) {
+      this.locationService.OgcAPI = this.ogcUrl
+    }
+
     // set invisible to prevent unstyled flashing of vectorTileLayer
     vectorTileLayer.setVisible(false)
     vectorTileLayer.setSource(vtSource)
     vectorTileLayer.setVisible(true)
     vectorTileLayer.set('renderMode', 'hybrid')
+
+    this.dolayers()
+
+
   }
 
-  showselectedFeature() {
-    return (this.selectedFeature !== undefined);
-  }
+  dolayers() {
+    const debugLayer = new TileLayer({
+      source: new TileDebug({
+        projection: this.rdProjection,
+        tileGrid: new TileGrid({
+          extent: this.rdProjection.getExtent(),
+          resolutions: this.resolutions,
+          tileSize: [256, 256],
+          origin: getTopLeft(this.rdProjection.getExtent()),
+        })
+      })
+    })
 
-  colorArray() {
-    return new Map<string, DrawColor>([...this.colorMap.entries()].sort());
-  }
 
-  onCheckboxAllChange(event: any) {
-    this.colorMap.forEach(x => { x.show = event.target.checked })
-    this.vectorTileLayer.getSource()!.refresh();
-  }
 
-  onColorChange(row: KeyValue<string, DrawColor>) {
-    row.value.mapbox = false;
-    this.vectorTileLayer.getSource()!.refresh();
-  }
+    const luchtfotoLayer = new TileLayer({
+      source: new WMTS({
+        url: 'https://service.pdok.nl/hwh/luchtfotorgb/wmts/v1_0',
+        layer: 'Actueel_orthoHR',
+        style: 'default',
+        format: 'image/png',
+        matrixSet: 'EPSG:28992',
+        projection: this.rdProjection,
+        tileGrid: new WMTSTileGrid({
+          extent: this.rdProjection.getExtent(),
+          resolutions: this.resolutions,
+          tileSize: [256, 256],
+          origin: getTopLeft(this.rdProjection.getExtent()),
+          matrixIds: this.matrixIds,
+        })
+      })
+    })
 
-  onCheckboxChange(event: any, row: KeyValue<string, DrawColor>) {
-    var ui = row.value;
-    var newvalue = new DrawColor(ui.label, ui.legendfeature);
-    newvalue.show = event.target.checked;
-    if (this.colorMap.has(ui.label)) {
-      this.colorMap.set(ui.label, newvalue)
+    const brtBackgroundLayer = new VectorTileLayer({
+      renderMode: 'hybrid',
+      declutter: true,
+      source: this.getVectorTileSource(this.rdProjection, tileurlBRTAchtergrond, 0),
+    })
+
+    // apply BRTAchtergrondStandaard visualization styling to this layer
+    const brtJson = getStyleUrl(Visualisatie.BRTAchtergrondStandaard, 'netherlandsrdnewquad')
+    if (brtJson.styleUrl) {
+      fetch(brtJson.styleUrl).then((response) => {
+      response.json().then((glStyle) => {
+        if (glStyle.sprite) {
+        fetch(getSpriteDataUrl(glStyle.sprite)).then((response2) => {
+          response2.json().then((spritedata) => {
+          const imageUrl = getSpriteImageUrl(glStyle.sprite)
+          const brtStyleFn = stylefunction(
+            brtBackgroundLayer,
+            glStyle,
+            brtJson.source,
+            this.resolutions,
+            spritedata,
+            imageUrl
+          ) as StyleFunction
+          brtBackgroundLayer.setStyle(brtStyleFn)
+          })
+        })
+        } else {
+        const brtStyleFn = stylefunction(
+          brtBackgroundLayer,
+          glStyle,
+          brtJson.source,
+          this.resolutions
+        ) as StyleFunction
+        brtBackgroundLayer.setStyle(brtStyleFn)
+        }
+      })
+      })
+    } else {
+      // fallback: use same doStyle logic so BRTAchtergrondStandaard still gets processed by doStyle
+      brtBackgroundLayer.setStyle(this.doStyle.bind(this) as StyleFunction)
     }
-    this.vectorTileLayer.getSource()!.refresh();
+
+
+
+    const layers = []
+    if (this.localStorageService.getBoolean('showLuchtFotoLayer')) {
+      layers.push(luchtfotoLayer)
+    }
+    if (this.localStorageService.getBoolean('showBrtLayer')) {
+      layers.push(brtBackgroundLayer)
+    }
+    layers.push(this.vectorTileLayerRD)
+    if (this.localStorageService.getBoolean('showDebugLayer')) {
+      layers.push(debugLayer)
+    }
+
+    this.map1.setLayers(layers)
+
+    this.map1.changed()
+  }
+
+
+
+
+
+  showselectedFeatures(): boolean {
+    return this.selectedFeatures.length > 0
   }
 
   NewColorMap() {
-    this.clearColorMap();
-    this.vectorTileLayer.getSource()!.refresh();
+    this.colorMap.clear()
+    this.vectorTileLayerRD.getSource()!.refresh()
   }
 
-  ApplyColorMap() {
-    this.vectorTileLayer.getSource()!.refresh();
+  private ApplyColorMap() {
+    this.vectorTileLayerRD.getSource()!.refresh()
   }
 
-  DemoRandomLocationToggle() {
-    this.isDemoLocatieRotate = !this.isDemoLocatieRotate
-    if (this.isDemoLocatieRotate) {
-      this.demotextLocatie = this.demotextLocatieUit;
-      this.gotoRandomLocation();
-    } else {
-      this.demotextLocatie = this.demotextLocatieAan;
-    }
+  GetBlancoDefaultStyle() {
+    const fill = new Fill({
+      color: 'rgba(255,255,255,0.05)',
+    })
+    const stroke = new Stroke({
+      color: 'rgb(51, 153, 204, 0.8)',
+      width: 1.25,
+    })
+    const newCircle = new Circle({
+
+      stroke: stroke,
+      radius: 5,
+    })
+
+    const styles = [
+      new Style({
+        image: newCircle,
+        fill: fill,
+        stroke: stroke,
+      }),
+    ]
+    return styles
+
   }
+  getOgcUrl(): string | undefined {
+    return this.ogcUrl?.url
 
-  DemogotoStartLocationOnMap() {
-    this.isShowDetails = false;
-    this.isShowLegend = false;
-    this.isShowDemo = false;
-    this.isDemoVisualisatieRotate = false;
-    this.isDemoLocatieRotate = false;
-    this.SelectedVisualisation = Visualisatie.standaard;
-    const newloc = this.locationService.initialView;
-    this.changeStyleJson(this.vectorTileLayer, this.resolutions);
-    this.locationService.changeView(newloc);
   }
-
-  DemoVisualisationToggle() {
-    this.isDemoVisualisatieRotate = !this.isDemoVisualisatieRotate
-    if (this.isDemoVisualisatieRotate) {
-      this.demotextVisualisatie = this.demotextVisualisatieUit;
-      this.SelectedVisualisation = Visualisatie.achtergrond;
-      this.repeating_style_function()
-    } else {
-      this.demotextVisualisatie = this.demotextVisualisatieAan;
-    }
-  }
-
-
-  gotoRandomLocation() {
-    if (this.isDemoLocatieRotate) {
-      var dx = 155000 + Math.round(Math.random() * 50000)
-      var dy = 463000 + Math.round(Math.random() * 50000)
-      const newloc = new View({
-        projection: this.locationService.rdProjection,
-        center: [dx, dy],
-        zoom: 13
-      });
-      this.locationService.changeView(newloc);
-      setTimeout(() => { this.gotoRandomLocation() }, 8000);
-    }
-  }
-
-  repeating_style_function() {
-    if (this.isDemoVisualisatieRotate) {
-      this.SelectedVisualisation = getRandomEnumValue(Visualisatie);
-      this.changeStyleJson(this.vectorTileLayer, this.resolutions);
-      setTimeout(() => { this.repeating_style_function() }, Math.round(Math.random() * 4000));
-    }
-  }
-
-
-
 }

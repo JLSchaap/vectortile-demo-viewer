@@ -1,97 +1,165 @@
-import { AfterContentInit, AfterViewInit, Component, OnInit } from '@angular/core';
-import { View } from 'ol';
-import { LocationService } from '../location.service';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewEncapsulation } from '@angular/core'
+import { Observable } from 'rxjs'
 import { DefaultService as PdokLocationService } from '../api/locatieserver/v3'
-import { Observable } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
-import { ResolveData } from '@angular/router';
+import { DisplayItem, IdlookupService } from '../idlookup.service'
+import { LocationService } from '../location.service'
+import { CommonModule } from '@angular/common'
+import { SearchnewComponent } from "../searchnew/searchnew.component";
+import {demoSettings} from '../app.component'
+
+
 export interface Suggest {
-  response: Response;
-  highlighting: Highlighting;
-  spellcheck: Spellcheck;
+  response: Response
+  highlighting: unknown
+  spellcheck: Spellcheck
 }
 export interface Response {
-  numFound: number;
-  start: number;
-  maxScore: number;
-  docs?: (DocsEntity)[] | null;
+  numFound: number
+  start: number
+  maxScore: number
+  docs?: (DocsEntity)[] | null
 }
 export interface DocsEntity {
-  weergavenaam: string;
-  centroide_rd: string;
+  weergavenaam: string
+  centroide_rd: string
 }
-export interface Highlighting { };
+
 
 export interface high {
-  suggest?: (string)[] | null;
+  suggest?: (string)[] | null
 }
 export interface Spellcheck {
-  suggestions?: (null)[] | null;
-  collations?: (null)[] | null;
+  suggestions?: (null)[] | null
+  collations?: (null)[] | null
 }
+
 
 
 @Component({
+   encapsulation: ViewEncapsulation.None,
+  standalone: true,
   selector: 'app-search',
   templateUrl: './search.component.html',
-  styleUrls: ['./search.component.css']
+  styleUrls: ['./search.component.css'],
+  imports: [
+    CommonModule,
+    SearchnewComponent
+]
+
+
 })
-export class SearchComponent implements OnInit {
+export class SearchComponent implements OnInit, AfterViewInit {
+
+
   $suggest!: Observable<Suggest>
-  searchListVisible: boolean =false;
-  searchLocation:string  ="" 
+  searchListVisible: boolean = false;
+  searchLocation: string = ""
+  $ids!: Observable<(false | DisplayItem)[]>
 
+inputHeight=5
+inputWidth=25
+  previewLocApi: boolean = false
 
+  constructor( private elementRef: ElementRef, private pdokLocationService: PdokLocationService, private locationService: LocationService, private idlookupService: IdlookupService) { }
 
-
-
-
-  constructor(private pdokLocationService: PdokLocationService, private locationService: LocationService) { }
-
+  // eslint-disable-next-line @angular-eslint/no-empty-lifecycle-method
   ngOnInit(): void {
-    // nothing 
-
-  }
-
-
-
-
-  onSearchKey(search: string) {
-    this.$suggest = this.pdokLocationService.suggestGet(search, 'weergavenaam centroide_rd', undefined, undefined, undefined, 7);
-    this.searchListVisible = true; 
-  }
-
-
-  onSelectSearch(row: DocsEntity) {
-    this.locationService.zoomto(row.centroide_rd)
-    this.searchListVisible = false; 
-    this.searchLocation= row.weergavenaam; 
-   
+    this.setsize()
+    this.previewLocApi= false
 
 
 
   }
-  getNames(a: Suggest| null) {
-    if (a)
-    {
-      return a.response.docs
-    }
-    else{
-    return undefined
-    }
-  }
+
+ngAfterViewInit(): void {
 
 }
 
+  setsize(){
+    try {
+      const elm: HTMLElement = this.elementRef.nativeElement.querySelector("[class='searchBox']");
+      if (elm) {
+        this.inputWidth = elm.offsetWidth;
+        this.inputHeight = elm.offsetHeight;
+      } else {
+        console.error("Element with class 'searchBox' not found.");
+      }
+    } catch (error) {
+      console.error("An error occurred while setting input dimensions:", error);
+    }
 
 
+  }
+
+  onSearchKey(search: string) {
+
+    if (search==="locationAPI") {
+      this.previewLocApi= true
+
+    }
+
+    const ogc = this.locationService.OgcAPI
+    if (ogc) {
+      const t = this.findTokens(search, ogc.lokaalIdRegex)
+      if (search.length > 9) {
+        const lokaalid = t[0]
+        if (lokaalid){
+        this.$ids = this.idlookupService.existsId(ogc.url, lokaalid, ogc.fieldname )
+        }
+      }
+    }
+    if (search.length > 2) {
+      this.$suggest = this.pdokLocationService.suggestGet(search, 'weergavenaam centroide_rd', undefined, undefined, undefined, 7)
+    }
+    this.searchListVisible = true
+
+  }
 
 
+  findTokens(input: string, regex: RegExp): string[] {
+
+    const matches = regex.exec(input)
+    return matches || []
+  }
+
+  onSelectSearch(row: DocsEntity) {
+    this.locationService.zoomto(row.centroide_rd, row.weergavenaam)
+    this.searchListVisible = false
+    this.searchLocation = row.weergavenaam
+  }
+
+  onSelectSearchID(row: DisplayItem) {
+    if (row) {
+      this.locationService.zoomToFeatures(row.link, row.displayName)
+      this.searchListVisible = false
+      this.searchLocation = row.displayName
+    } else {
+      throw Error("Wrong call for selectid")
+    }
 
 
+  }
+  getNames(a: Suggest | null): DocsEntity[] | null | undefined {
+    if (a) {
+      return a.response.docs
+    }
+    else {
+      return undefined
+    }
+  }
 
 
+  getids(ids: (false | DisplayItem)[] | null) {
+    if (ids) {
+      return ids.filter((x) => typeof x != "boolean") as DisplayItem[]
+    }
+    else return undefined
+  }
 
+  handleactiveSearchNewText(searchstring : string) {
+    this.searchLocation = searchstring
 
+    this.onSearchKey(searchstring)
+    }
 
-
+}

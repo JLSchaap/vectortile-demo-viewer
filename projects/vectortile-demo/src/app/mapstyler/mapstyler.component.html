@@ -1,0 +1,130 @@
+<div class="scroll">
+  <mat-slide-toggle
+    class="check"
+    labelPosition="before"
+    [matTooltip]="
+      !isShowStyler
+        ? 'Select om zelf de visualisatie aan te passen'
+        : 'Select om Standaard visualisatie tonen'
+    "
+    [matTooltipPosition]="'left'"
+    aria-label="Toon object informatie"
+    [checked]="isShowStyler"
+    (click)="toggleShowStdLegend()"
+    >Visualisatie aanpassen</mat-slide-toggle
+  >
+
+  <div class="legend-view">
+    <app-legend-view
+      #lview
+      style-url=""
+      [hidden]="isShowStyler"
+      [titleItems]="getTitelItems()"
+    >
+    </app-legend-view>
+  </div>
+
+  <table *ngIf="isShowStyler">
+    <caption class="legend-table-caption">
+      Legenda Aanpassen
+    </caption>
+    <thead>
+      <th id="Veld">Waarde</th>
+      <th id="Veld">Tonen</th>
+      <th id="Waarde">Visualisatie</th>
+    </thead>
+    <tbody>
+      <tr>
+        <td>alle waarden</td>
+        <td>
+          <input
+            type="checkbox"
+            checked
+            (change)="onCheckboxAllChange($event)"
+            title="Toggle all values"
+          />
+        </td>
+        <td>
+          <div class="legend-button-area">
+            <div class="legend-button-area-item">
+              <button (click)="NewColorMap()" type="button">
+                Reset Legenda
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="hasTextlabels()">
+        <td>labels</td>
+        <td>
+          <input
+            type="checkbox"
+            [checked]="colorArrayChecked(true)"
+            (change)="onCheckboxLabelsChange($event)"
+            title="Toggle labels"
+          />
+        </td>
+
+        <td>
+          <tr *ngFor="let x of getItems(true) | keyvalue">
+            <td>
+              <input
+                type="checkbox"
+                [checked]="x.value.show"
+                (change)="onCheckboxChange($event, x)"
+                title="Toggle visibility"
+              />
+              {{ x.key }}
+              <ng-container *ngIf="x.value.show">
+                <div [ngStyle]="x.value.textcolorRbgString()">
+                  {{x.value.sampleText}}
+                </div>
+
+                <div class="colorpick">
+                  <input
+                    title="Pick a color"
+                    [(colorPicker)]="x.value.rbgString"
+                    [style.background]="x.value.rbgString"
+                    [cpOutputFormat]="'rgba'"
+                    [cpAlphaChannel]="'enabled'"
+                    (colorPickerChange)="onColorChange(x)"
+                    [cpSaveClickOutside]="true"
+                  />
+                </div>
+              </ng-container>
+            </td>
+          </tr>
+        </td>
+      </tr>
+
+      <tr *ngFor="let x of getItems(false) | keyvalue : valueAscOrder">
+        <td>{{ x.key }}</td>
+
+        <td>
+          <input
+            type="checkbox"
+            [checked]="x.value.show"
+            (change)="onCheckboxChange($event, x)"
+            title="Toggle visibility"
+          />
+        </td>
+        <td>
+          <div *ngIf="x.value.show">
+            <div class="colorpick">
+              <input
+                title="Pick a color"
+                [(colorPicker)]="x.value.rbgString"
+                [style.background]="x.value.rbgString"
+                [cpOutputFormat]="'rgba'"
+                [cpAlphaChannel]="'enabled'"
+                (colorPickerChange)="onColorChange(x)"
+                [cpSaveClickOutside]="true"
+              />
+            </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>

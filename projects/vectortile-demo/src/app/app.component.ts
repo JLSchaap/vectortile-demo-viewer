@@ -1,52 +1,68 @@
-
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subscription, Observable, timer } from 'rxjs';
-import { Visualisatie, getJsonurl } from './enumVisualisatie';
-import { enumFromValue } from './enumFromValue';
+import { Component, OnInit } from '@angular/core'
+import { Router } from '@angular/router'
+import {
+  Visualisatie,
+  getAllVisualisaties,
+  getStyleUrl,
+} from './enumVisualisatie'
+import { LocationComponent } from './location/location.component'
+import { OlmapComponent } from './olmap/olmap.component'
+import { ShowlinkComponent } from './showlink/showlink.component'
+import { CommonModule } from '@angular/common'
+import { SearchComponent } from './search/search.component'
+import { environment } from '../environments/environment'
+export const demoSettings = {
+  demoVisualisatieRotate: false,
+  demoLocatieRotate: false,
+  previewFeature: false,  // !environment.production,
+  demoLocationApi: true
+}
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styleUrls: ['./app.component.scss'],
+    imports:[CommonModule, LocationComponent, OlmapComponent, ShowlinkComponent, SearchComponent]
 
 })
-
-
 export class AppComponent implements OnInit {
-  enumFromValue = <T extends Record<string, string>>(val: string, _enum: T, errormessage: string = `${val} not in enum`) => {
-    const enumName = (Object.keys(_enum) as Array<keyof T>).find(k => _enum[k] === val);
-    if (!enumName)
-      throw new Error(errormessage)
-    return _enum[enumName];
+  enumFromValue = <T extends Record<string, string>>(
+    val: string,
+    _enum: T,
+    errormessage: string = `${val} not in enum`
+  ) => {
+    const enumName = (Object.keys(_enum) as Array<keyof T>).find(
+      (k) => _enum[k] === val
+    )
+    if (!enumName) throw new Error(errormessage)
+    return _enum[enumName]
   };
 
-  title = 'vector-style-tester';
-  visualisatie = Visualisatie;
-  currentVis = Visualisatie.achtergrond
+  visualisatie = getAllVisualisaties();
+  currentVis = Visualisatie.BGTachtergrond;
+  //currentVis = Visualisatie.BRTAchtergrondStandaard;
   isShow: boolean = false;
+  styleurl!: string
 
   constructor(private router: Router) {
     /* do nothing*/
   }
 
-  ngOnInit() {
-  }
+  ngOnInit() { }
 
   toggleShow() {
-    this.isShow = !this.isShow;
+    this.isShow = !this.isShow
+    this.visualisatie = getAllVisualisaties()
   }
 
-  receiveTitle(data: Visualisatie){
-    this.currentVis = data; 
-     
+  receiveTitle(data: Visualisatie) {
+    this.currentVis = data
+
+    this.styleurl = getStyleUrl(this.currentVis, "netherlandsrdnewquad").styleUrl!
   }
 
   onSelect(vis: Visualisatie): void {
-    this.currentVis = vis;
-    this.isShow = false;
+    this.currentVis = vis
+    this.isShow = false
   }
-
-
-
 }

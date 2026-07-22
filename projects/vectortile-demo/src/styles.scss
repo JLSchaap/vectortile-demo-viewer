@@ -1,24 +1,44 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'sass:map';
+@use '@angular/material' as mat;
+@include mat.elevation-classes();
+@include mat.app-background();
+
+
+
+
 :root {
-  --buttonheight: 5vh;
-  --buttontop: 2.25vh;
+
+
+
+  --oranje: #ffa500;
+  --pdokblauw: #1a1e4f;
+  --blue-100: #4183c4;
+  --font-family: "Roboto";
+  --buttonheight: 8vh;
+  --buttonwidth: 20vw;
+  --buttontop: 1.00vh;
 
   --buttonbarleft: 63vw;
   --buttonbarwidth: 36vw;
 
-  
-  --fontsize: 2.3vmin ;
+
+  --fontsize: 2.0vmin;
 
   --mapheight: 99vmin;
-  --mapwidth: 99vmin; 
+  --mapwidth: 99vmin;
 
   --headerheight: 9vh;
-  --headertop: 1vh; 
-  --headerwidth:  99vw ; 
+  --headertop: 1vh;
+  --headerright: 0.5vw;
+  --headerwidth: 99vw;
+
+  --footerheight: 3vh;
+  --footertop: 96.5vh;
+
 
   --searchleft: 1vw;
-  --searchwidth: 20vw;
-  --searchtop:12vh; 
+  --searchwidth: 25vw;
+  --searchtop: 12vh;
 
 
 
@@ -26,4 +46,18 @@
   --visselectwidth: 20vw;
 
   overflow: hidden !important;
+
+
+
+
+
+
+  html,
+  body {
+    height: 100%;
+  }
+
+
+
+
 }
