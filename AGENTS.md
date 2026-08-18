@@ -65,10 +65,12 @@ graph TD
 - Treat `projects/vectortile-demo/src/app/api/locatieserver/v3/**` as generated code.
 - Do not rename or move files under `projects/vectortile-demo/src/mapboxstyles/` without updating asset mappings and style references.
 - Keep sprite, glyph, source, and tile URLs consistent; run the relevant `val*` script after style changes.
+- Note that `npm run val` covers BRK, BGT background, standard, tactile, and WKPB styles; use `valbag` or `valbrt` separately when changing BAG or BRT styles.
 - Tile URLs and environment replacements are environment-sensitive.
 - The deploy script contains the GitHub Pages repository, base href, and maintainer identity; change it deliberately.
 - Production builds enforce initial bundle and component-style budgets.
 - Keep Karma/Cypress config paths and the Angular project name `vectortile-demo` aligned with `angular.json`.
+- The `agents:update` npm script invokes the CLI directly; Chat-only references such as `#file:update-agents-prompt.md` are not resolved by the shell script.
 
 ## Key References
 - General project README: [README.md](README.md)
