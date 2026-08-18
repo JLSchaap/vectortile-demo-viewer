@@ -75,6 +75,7 @@ graph TD
 
 ## Key References
 - General project README: [README.md](README.md)
+- Reusable AGENTS update prompt: [update-agents-prompt.md](update-agents-prompt.md)
 - Generated API notes: [projects/vectortile-demo/src/app/api/locatieserver/v3/README.md](projects/vectortile-demo/src/app/api/locatieserver/v3/README.md)
 - Build and asset mapping: [angular.json](angular.json)
 - CI/deploy workflow: [.github/workflows/buildanddeploy.yml](.github/workflows/buildanddeploy.yml)
