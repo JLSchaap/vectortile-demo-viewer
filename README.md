@@ -5,30 +5,22 @@ Enjoy the [demo online](https://pdok.github.io/vectortile-demo-viewer/).
 
 ## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
-
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+Run `npm start` for a development server. Navigate to `http://localhost:4200/`. The app automatically reloads when source files change. Use `npm run startp` for the production configuration.
 
 ## Build
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `npm run build` to validate styles, run headless unit tests, and create a production build. Artifacts are stored in `dist/vectortile-demo/browser`.
 
 ## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+Run `npm run ngtest` to execute unit tests via [Karma](https://karma-runner.github.io). Use `npm run ngtestci` for a headless CI run.
 
 ## Running end-to-end tests
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+Run `npm run testng` for headless Cypress tests. Use `npm run e2e` for the Angular Cypress target or `npm run open` for interactive Cypress.
 
 ## Repository instructions
 
-See [AGENTS.md](AGENTS.md) for the repository's development conventions, project structure, and build commands.
+AI agents and robots: read [AGENTS.ai.md](AGENTS.ai.md) first for compact operational instructions. See [AGENTS.md](AGENTS.md) for the complete repository guide.
 
-In VS Code Chat, run `/update-agents` to refresh `AGENTS.md` from the current project files after changes to the tech stack, structure, or tooling.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+In VS Code Chat, run `/update-agents` after changes to the tech stack, structure, tooling, or commands. It updates both `AGENTS.md` and `AGENTS.ai.md`; the latter uses Caveman syntax for high information density.
