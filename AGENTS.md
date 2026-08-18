@@ -5,10 +5,10 @@
 - Treat this file as the execution guide for coding agents in this repository.
 
 ## Tech Stack
-- Angular 20 with Angular CLI/build, TypeScript 5.8, and RxJS 7.8.
-- OpenLayers 10 with `ol-mapbox-style` and MapLibre style-spec tooling.
-- Angular Material, `ngx-color-picker`, and `zone.js`.
-- Unit tests use Karma/Jasmine; end-to-end and visual tests use Cypress.
+- Angular 20.3.16 with Angular CLI/build 20.3.14, TypeScript 5.8.3, and RxJS 7.8.2.
+- OpenLayers 10.5.0 with `ol-mapbox-style` 12.6.0 and `@maplibre/maplibre-gl-style-spec` 24.4.1.
+- Angular Material and CDK 20.2.2, `ngx-color-picker`, and `zone.js`.
+- Unit tests use Karma 6.4.4/Jasmine 5.6.0; end-to-end and visual tests use Cypress 15.9.0 with `cypress-image-diff-js`.
 - Angular ESLint provides linting; Mapbox styles use `gl-style-validate`.
 
 ## Project Structure
@@ -22,7 +22,7 @@
 - `location.service.ts`: shared map-view state and search-driven recentering.
 - `api/locatieserver/v3/`: generated PDOK client; do not edit manually.
 - `environments/`: development and production endpoint configuration.
-- `mapboxstyles/`: style JSON, sprites, and glyph assets, copied to the build as `styles/*` by `angular.json`.
+- `mapboxstyles/`: style JSON, sprites, and glyph assets, copied to the build as `styles/*` by `angular.json`. Root styles include BGT background/standard, tactile, annotated administrative areas, and line-test styles; BAG, BGT, BRK, and BRT variants are grouped in subdirectories where applicable.
 
 ## Layer Connections
 ```mermaid
@@ -51,11 +51,12 @@ graph TD
 - Lint: `npm run lint` (runs Angular ESLint with `--fix`).
 - Style validation: `npm run val`; formatting: `npm run format:styles`.
 - GitHub Pages deploy: `npm run deploy`.
+- BAG validation: `npm run valbag` currently targets a legacy `bagstd.json` path; verify or correct that path before relying on the command.
 
 ## Code Conventions
 - Preserve existing mixed Dutch/English domain vocabulary such as `Visualisatie` and `weergavenaam`.
 - Keep feature logic in its component folder with templates and styles colocated.
-- Preserve the existing mix of standalone component imports and the custom-bootstrapped `AppModule`.
+- Preserve the existing mix of standalone component imports and the module-bootstrapped `AppModule`.
 - Prefer explicit types on new public members and return values; avoid introducing new `any`.
 - Use `LocationService` as the shared view-state channel and preserve its observable/`BehaviorSubject` contract.
 - Component styles are primarily SCSS; preserve an existing stylesheet extension unless migration is required.
@@ -66,16 +67,17 @@ graph TD
 - Do not rename or move files under `projects/vectortile-demo/src/mapboxstyles/` without updating asset mappings and style references.
 - Keep sprite, glyph, source, and tile URLs consistent; run the relevant `val*` script after style changes.
 - Note that `npm run val` covers BRK, BGT background, standard, tactile, and WKPB styles; use `valbag` or `valbrt` separately when changing BAG or BRT styles.
+- The `valbag` script currently references `projects/vectortile-demo/src/mapboxstyles/bagstd.json`, which is absent; the BAG styles are under the `mapboxstyles/bag/` directory.
 - Tile URLs and environment replacements are environment-sensitive.
 - The deploy script contains the GitHub Pages repository, base href, and maintainer identity; change it deliberately.
 - Production builds enforce initial bundle and component-style budgets.
 - `angular.json` replaces `environment.ts` with `environment.prod.ts` for production builds; verify endpoint changes in both environment files.
 - Keep Karma/Cypress config paths and the Angular project name `vectortile-demo` aligned with `angular.json`.
-- The `agents:update` npm script invokes the CLI directly; Chat-only references such as `#file:update-agents-prompt.md` are not resolved by the shell script.
+- The `agents:update` npm script invokes the CLI directly; the reusable `/update-agents` prompt is available through VS Code Chat.
 
 ## Key References
 - General project README: [README.md](README.md)
-- Reusable AGENTS update prompt: [update-agents-prompt.md](update-agents-prompt.md)
+- Reusable AGENTS update prompt: [.github/prompts/update-agents.prompt.md](.github/prompts/update-agents.prompt.md)
 - Generated API notes: [projects/vectortile-demo/src/app/api/locatieserver/v3/README.md](projects/vectortile-demo/src/app/api/locatieserver/v3/README.md)
 - Build and asset mapping: [angular.json](angular.json)
 - CI/deploy workflow: [.github/workflows/buildanddeploy.yml](.github/workflows/buildanddeploy.yml)

@@ -1,8 +1,11 @@
+---
+mode: agent
+description: Update AGENTS.md using the current repository files
+---
+
 # AGENTS.md Update Prompt
 
 example usage: 
-
-Lees #file:update-agents-prompt.md en voer de daarin beschreven opdracht uit. Wijzig uitsluitend AGENTS.md.
 
 Update `AGENTS.md` using the current project files as the source of truth.
 
