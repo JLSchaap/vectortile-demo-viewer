@@ -44,7 +44,7 @@ graph TD
 ## Build And Test Commands
 - Install: `npm ci`
 - Development server: `npm start`; production server: `npm run startp`.
-- Build: `npm run build` (style validation, headless unit tests, then production build).
+- Build: `npm run build` (style validation, headless unit tests, then the default production build); output is under `dist/vectortile-demo/browser`.
 - Watch build: `npm run watch`.
 - Unit tests: `npm run ngtest` or CI-style `npm run ngtestci`.
 - E2E tests: `npm run testng`; interactive Cypress: `npm run open`; Angular Cypress target: `npm run e2e`.
@@ -69,6 +69,7 @@ graph TD
 - Tile URLs and environment replacements are environment-sensitive.
 - The deploy script contains the GitHub Pages repository, base href, and maintainer identity; change it deliberately.
 - Production builds enforce initial bundle and component-style budgets.
+- `angular.json` replaces `environment.ts` with `environment.prod.ts` for production builds; verify endpoint changes in both environment files.
 - Keep Karma/Cypress config paths and the Angular project name `vectortile-demo` aligned with `angular.json`.
 - The `agents:update` npm script invokes the CLI directly; Chat-only references such as `#file:update-agents-prompt.md` are not resolved by the shell script.
 
