@@ -1,3 +1,5 @@
+AI agents and robots: read [AGENTS.ai.md](AGENTS.ai.md) first for the compact operational instructions.
+
 # AGENTS.md
 
 ## Purpose
@@ -7,9 +9,9 @@
 ## Tech Stack
 - Angular 20.3.16 with Angular CLI/build 20.3.14, TypeScript 5.8.3, and RxJS 7.8.2.
 - OpenLayers 10.5.0 with `ol-mapbox-style` 12.6.0 and `@maplibre/maplibre-gl-style-spec` 24.4.1.
-- Angular Material and CDK 20.2.2, `ngx-color-picker`, and `zone.js`.
-- Unit tests use Karma 6.4.4/Jasmine 5.6.0; end-to-end and visual tests use Cypress 15.9.0 with `cypress-image-diff-js`.
-- Angular ESLint provides linting; Mapbox styles use `gl-style-validate`.
+- Angular Material and CDK 20.2.2, `ngx-color-picker` 16.0.0, and `zone.js` 0.15.1.
+- Unit tests use Karma 6.4.4/Jasmine 5.6.0; end-to-end and visual tests use Cypress 15.9.0 with `cypress-image-diff-js` 2.5.0.
+- Angular ESLint 19.3.0 provides linting; Mapbox styles use `gl-style-validate`.
 
 ## Project Structure
 - Workspace app: `projects/vectortile-demo`; source root: `projects/vectortile-demo/src`.
@@ -68,6 +70,7 @@ graph TD
 - Keep sprite, glyph, source, and tile URLs consistent; run the relevant `val*` script after style changes.
 - Note that `npm run val` covers BRK, BGT background, standard, tactile, and WKPB styles; use `valbag` or `valbrt` separately when changing BAG or BRT styles.
 - The `valbag` script currently references `projects/vectortile-demo/src/mapboxstyles/bagstd.json`, which is absent; the BAG styles are under the `mapboxstyles/bag/` directory.
+- The npm `agents:update` scripts still request updates to `AGENTS.md` only; use `/update-agents` to update both agent guides.
 - Tile URLs and environment replacements are environment-sensitive.
 - The deploy script contains the GitHub Pages repository, base href, and maintainer identity; change it deliberately.
 - Production builds enforce initial bundle and component-style budgets.
