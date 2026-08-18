@@ -23,6 +23,12 @@ Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.
 
 Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
 
+## Repository instructions
+
+See [AGENTS.md](AGENTS.md) for the repository's development conventions, project structure, and build commands.
+
+In VS Code Chat, run `/update-agents` to refresh `AGENTS.md` from the current project files after changes to the tech stack, structure, or tooling.
+
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
