@@ -54,4 +54,4 @@ Angular app. BGT vector tiles. OpenLayers. Local Mapbox styles.
 
 ## Updating Instructions
 
-Stack/structure/tooling/command change? Run `/update-agents`. It updates `AGENTS.md` and this file. Keep both logically aligned.
+Stack/structure/tooling/command change? Run `/update-agents`. Updates `AGENTS.md` and this file. Keep logically aligned.

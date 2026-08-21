@@ -55,28 +55,85 @@ graph TD
 - GitHub Pages deploy: `npm run deploy`.
 - BAG validation: `npm run valbag` currently targets a legacy `bagstd.json` path; verify or correct that path before relying on the command.
 
-## Code Conventions
-- Preserve existing mixed Dutch/English domain vocabulary such as `Visualisatie` and `weergavenaam`.
-- Keep feature logic in its component folder with templates and styles colocated.
-- Preserve the existing mix of standalone component imports and the module-bootstrapped `AppModule`.
-- Prefer explicit types on new public members and return values; avoid introducing new `any`.
-- Use `LocationService` as the shared view-state channel and preserve its observable/`BehaviorSubject` contract.
-- Component styles are primarily SCSS; preserve an existing stylesheet extension unless migration is required.
-- Add focused tests near behavior changes; avoid broad test refactors.
+## TypeScript and Angular Conventions
+
+- **Explicit types**: Prefer explicit return types on public methods and properties; avoid `any`.
+- **Components**: Keep component logic, templates, and styles colocated in the feature folder. Do not break apart component files.
+- **Services**: Use `LocationService` as the primary shared view-state channel; preserve its observable/`BehaviorSubject` contract.
+- **Module structure**: Preserve the existing mix of standalone component imports and the module-bootstrapped `AppModule`.
+- **Domain vocabulary**: Maintain existing mixed Dutch/English vocabulary (e.g., `Visualisatie`, `weergavenaam`). Do not anglicize these terms.
+
+## Mapbox Style Conventions
+
+- **Style JSON locations**: All Mapbox styles live under `projects/vectortile-demo/src/mapboxstyles/`:
+  - Root styles: `bgt_standaardvisualisatie.json`, `bgt_achtergrondvisualisatie.json`, `tactielevisualisatie.json`, and line-test styles.
+  - Grouped variants: `bag/`, `bgt/`, `brk/`, `brt/` subdirectories.
+- **Do not move files** without updating asset mappings in `angular.json` and all style references in code.
+- **Validate after changes**: Run `npm run val` after any style JSON modification. For BAG styles, use `npm run valbag`; for BRT, use `npm run valbrt`.
+- **Formatting**: Use `npm run format:styles` to format all style JSON files.
+
+## Testing Conventions
+
+- **Unit tests**: Use Karma/Jasmine. Run `npm run ngtest` for interactive mode or `npm run ngtestci` for CI headless mode.
+- **Add focused tests near behavior changes**; do not refactor entire test suites in unrelated PRs.
+- **E2E tests**: Use Cypress. Run `npm run testng` for headless, `npm run open` for interactive.
+- **Build includes tests**: `npm run build` runs `npm run ngtestci` before building; ensure all tests pass.
+
+## Code Style
+
+- **Linting**: Run `npm run lint` (Angular ESLint with `--fix`). Linter config is in `.eslintrc.json`.
+- **SCSS**: Component styles use SCSS; preserve the `.scss` extension unless migration is explicitly required.
+
+## Build and Deployment
+
+- **Development**: `npm start` (serves at http://localhost:4200/).
+- **Production server**: `npm run startp`.
+- **Build process**:
+  1. `npm run val` — validate Mapbox styles.
+  2. `npm run ngtestci` — run headless unit tests.
+  3. `ng build` — production build; output: `dist/vectortile-demo/browser`.
+- **Watch mode**: `npm run watch` for development builds.
+- **Deploy**: `npm run deploy` (GitHub Pages to PDOK repository; credentials and base href in `package.json`).
+
+## Generated Code
+
+- **Do not edit** `projects/vectortile-demo/src/app/api/locatieserver/v3/**` — this is generated code from PDOK client schema.
+- **Update process**: If PDOK client changes, regenerate this directory using your client generator.
+
+## Environment and Configuration
+
+- **Environment files**: 
+  - Development: `projects/vectortile-demo/src/environments/environment.ts`
+  - Production: `projects/vectortile-demo/src/environments/environment.prod.ts`
+  - `angular.json` swaps these for production builds; verify both files when changing endpoints.
+- **URL configuration**: `urlQuad.ts` and `environment*.ts` control tile and API URLs.
 
 ## High-Risk Pitfalls
-- Treat `projects/vectortile-demo/src/app/api/locatieserver/v3/**` as generated code.
-- Do not rename or move files under `projects/vectortile-demo/src/mapboxstyles/` without updating asset mappings and style references.
-- Keep sprite, glyph, source, and tile URLs consistent; run the relevant `val*` script after style changes.
-- Note that `npm run val` covers BRK, BGT background, standard, tactile, and WKPB styles; use `valbag` or `valbrt` separately when changing BAG or BRT styles.
-- The `valbag` script currently references `projects/vectortile-demo/src/mapboxstyles/bagstd.json`, which is absent; the BAG styles are under the `mapboxstyles/bag/` directory.
-- The npm `agents:update` scripts still request updates to `AGENTS.md` only; use `/update-agents` to update both agent guides.
-- Tile URLs and environment replacements are environment-sensitive.
-- The deploy script contains the GitHub Pages repository, base href, and maintainer identity; change it deliberately.
-- Production builds enforce initial bundle and component-style budgets.
+
+- **BAG validation**: The `npm run valbag` script references a legacy path (`projects/vectortile-demo/src/mapboxstyles/bagstd.json`), which is absent. BAG styles are under `mapboxstyles/bag/`; verify before relying on the command.
+- **Tile URL consistency**: Keep sprite, glyph, source, and tile URLs aligned across all style JSON files. Mismatches break the viewer.
+- **Cypress config paths**: Keep paths in `cypress.config.ts` and `projects/vectortile-demo/cypress.config.ts` aligned with `angular.json`.
+- **Angular project name**: The workspace project is `vectortile-demo`; keep this name consistent in `angular.json` and all build scripts.
+- **Bundle budgets**: Production builds enforce initial bundle and component-style budgets; verify build output against `angular.json` thresholds.
 - `angular.json` replaces `environment.ts` with `environment.prod.ts` for production builds; verify endpoint changes in both environment files.
 - Keep Karma/Cypress config paths and the Angular project name `vectortile-demo` aligned with `angular.json`.
 - The `agents:update` npm script invokes the CLI directly; the reusable `/update-agents` prompt is available through VS Code Chat.
+
+## Maintenance Matrix
+
+When making changes to these file categories, update related files to maintain consistency:
+
+| When You Change | Also Update | Why |
+|-----------------|-------------|-----|
+| Feature component (add/remove/rename) | `app.component.ts` or parent component imports; update tests | Layer connections, routing, parent-child bonds |
+| `LocationService` (signature or observables) | Components consuming `currentLocation` or calling `changeView()` | Prevent runtime errors from changed contracts |
+| Mapbox style JSON (any root style) | `stdstyles.ts` (enum), `mapboxstyles` export; test style switching | Style picker reflects current options; build includes all styles |
+| Build command or Node version | `package.json`, `.github/workflows/buildanddeploy.yml`, `.github/workflows/copilot-setup-steps.yml` | CI/deployment uses correct toolchain |
+| Environment endpoints (URLs, API keys) | Both `environment.ts` AND `environment.prod.ts` | Production builds use prod env; development uses dev |
+| Test coverage or new test files | `projects/vectortile-demo/tsconfig.spec.json`, `karma.conf.cjs`, `cypress/` configs | Test runners discover tests; coverage thresholds stay current |
+| PDOK API client (locatieserver) | Generated code in `projects/vectortile-demo/src/app/api/locatieserver/v3/`; do NOT edit manually | Keep generated code in sync with PDOK schema |
+| Angular/TypeScript major version | `tsconfig.json`, `package.json`, `angular.json`, build scripts | Toolchain consistency; some APIs change between major versions |
+| CI workflow or deploy process | `AGENTS.md` "Build And Test Commands" section | Documentation stays current for contributors |
 
 ## Key References
 - General project README: [README.md](README.md)
@@ -84,3 +141,6 @@ graph TD
 - Generated API notes: [projects/vectortile-demo/src/app/api/locatieserver/v3/README.md](projects/vectortile-demo/src/app/api/locatieserver/v3/README.md)
 - Build and asset mapping: [angular.json](angular.json)
 - CI/deploy workflow: [.github/workflows/buildanddeploy.yml](.github/workflows/buildanddeploy.yml)
+
+
+
