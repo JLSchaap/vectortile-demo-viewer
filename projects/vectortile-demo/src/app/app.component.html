@@ -29,39 +29,28 @@
             type="button"
             class="category-button"
             [class.active]="activeCategory === category"
-            (click)="activeCategory = category"
+            (click)="selectCategory(category)"
             role="tab"
             [attr.aria-selected]="activeCategory === category"
+            [attr.aria-controls]="'visualisaties-' + category"
             [attr.data-testid]="'category-' + category"
           >{{ category }}</button>
-        </div>
-
-        <div *ngIf="favoriteOptions.length > 0" class="option-section">
-          <h2>Favorieten</h2>
-          <div *ngFor="let option of favoriteOptions; trackBy: trackByVisualisatie" class="option-row">
-            <button mat-button type="button" class="lbutton" (click)="onSelect(option.visualisatie)" [attr.data-testid]="'visualisatie-' + option.visualisatie">
-              {{ option.title }}
-            </button>
-            <button type="button" class="favorite-button" (click)="toggleFavorite(option.visualisatie, $event)" [attr.aria-pressed]="true" [attr.aria-label]="'Verwijder ' + option.title + ' uit favorieten'">★</button>
-          </div>
         </div>
 
         <div *ngIf="recentOptions.length > 0" class="option-section">
           <h2>Recent gekozen</h2>
           <div *ngFor="let option of recentOptions; trackBy: trackByVisualisatie" class="option-row">
             <button mat-button type="button" class="lbutton" (click)="onSelect(option.visualisatie)">{{ option.title }}</button>
-            <button type="button" class="favorite-button" (click)="toggleFavorite(option.visualisatie, $event)" [attr.aria-pressed]="isFavorite(option.visualisatie)" [attr.aria-label]="(isFavorite(option.visualisatie) ? 'Verwijder ' : 'Voeg ') + option.title + ' uit favorieten'">{{ isFavorite(option.visualisatie) ? '★' : '☆' }}</button>
           </div>
         </div>
 
         <ng-container *ngFor="let group of groupedVisualisaties">
-          <div class="option-section">
+          <div class="option-section" [id]="'visualisaties-' + group.category">
             <h2>{{ group.category }}</h2>
             <div *ngFor="let option of group.options; trackBy: trackByVisualisatie" class="option-row">
               <button mat-button type="button" class="lbutton" (click)="onSelect(option.visualisatie)" [attr.data-testid]="'visualisatie-' + option.visualisatie">
                 {{ option.title }}
               </button>
-              <button type="button" class="favorite-button" (click)="toggleFavorite(option.visualisatie, $event)" [attr.aria-pressed]="isFavorite(option.visualisatie)" [attr.aria-label]="(isFavorite(option.visualisatie) ? 'Verwijder ' : 'Voeg ') + option.title + ' ' + (isFavorite(option.visualisatie) ? 'uit' : 'aan') + ' favorieten'">{{ isFavorite(option.visualisatie) ? '★' : '☆' }}</button>
             </div>
           </div>
         </ng-container>

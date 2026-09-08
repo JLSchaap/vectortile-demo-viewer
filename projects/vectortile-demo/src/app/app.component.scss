@@ -27,26 +27,31 @@
 }
 
 .vispanel {
+  box-sizing: border-box;
   position: absolute;
   background-color: transparent;
 
   left: var(--visselectleft, 45vw);
-  width: var(--visselectwidth, 20vw);
+  width: var(--visselectwidth, 18vw);
 
-  top: var(--buttontop, 0.5vh);
-  z-index: 4;
+  top: calc(var(--headertop, 1vh) + (var(--headerheight, 9vh) - var(--topbuttonheight, 2.5rem)) / 2);
+  z-index: 10;
   overflow-wrap: break-word;
 }
 
 .visbutton {
-
-  min-height: var(--buttonheight, 1vh);
-  height: var(--buttonheight, 1vh);
-  width: var(--buttonwidth, 20vw);
-  margin-top: 0.5vh;
-  flex: 1;
-
-
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--topbuttonheight, 2.5rem);
+  height: var(--topbuttonheight, 2.5rem);
+  width: calc(100% - 0.5vw);
+  margin: 0;
+  padding: 0 0.75rem;
+  background-color: whitesmoke;
+  border: 1px solid #b9bbc8;
+  border-radius: 0.25rem;
 }
 
 .lbutton {
@@ -57,13 +62,30 @@
 }
 
 .visualisatie-menu {
-  background: #fff;
+  position: relative;
+  z-index: 11;
+  background-color: white;
   border: 1px solid #b9bbc8;
-  box-shadow: 0 0.5rem 1.25rem rgba(26, 30, 79, 0.24);
+  border-radius: 0.25rem;
+  box-shadow: none;
   max-height: 75vh;
   overflow-y: auto;
-  padding: 0.75rem;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  margin-right: 1em;
+  padding: 1em;
   width: min(32rem, 84vw);
+  font-family: var(--font-family, "Roboto");
+}
+
+.visualisatie-menu,
+.visualisatie-menu .option-section {
+  text-align: left;
+}
+
+.visualisatie-menu .option-section {
+  background-color: white;
+  padding: 0.5rem;
 }
 
 .search-label {
@@ -124,25 +146,20 @@
   flex: 1;
 }
 
-.favorite-button {
-  background: transparent;
-  border: 0;
-  color: #1a1e4f;
-  cursor: pointer;
-  font-size: 1.25rem;
-  min-height: 2.5rem;
-  min-width: 2.5rem;
-}
-
 .empty-state {
   color: #4c4e5c;
   margin: 1rem 0.25rem 0.5rem;
 }
 
 @media (max-width: 48rem) {
+  :host {
+    --headerheight: 11vh;
+  }
+
   .vispanel {
-    left: 35vw;
-    width: 60vw;
+    left: 2vw;
+    top: calc(var(--headertop, 1vh) + (var(--headerheight, 11vh) - var(--topbuttonheight, 2.5rem) - var(--topbuttonheight, 2.5rem) - 0.5vw) / 2);
+    width: 96vw;
   }
 
   .visbutton {

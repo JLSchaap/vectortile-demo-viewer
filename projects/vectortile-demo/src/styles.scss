@@ -24,8 +24,8 @@
 
   --fontsize: 2.0vmin;
 
-  --mapheight: 99vmin;
-  --mapwidth: 99vmin;
+  --mapheight: 100vh;
+  --mapwidth: 100vw;
 
   --headerheight: 9vh;
   --headertop: 1vh;
@@ -60,4 +60,45 @@
 
 
 
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+.toprightpanel .mdc-form-field {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.toprightpanel .mdc-form-field label {
+  font-size: 0.6875rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 48rem) {
+  .toprightpanel .mdc-form-field > label {
+    font-size: 0.59375rem;
+  }
+
+  .toprightpanel .mdc-switch {
+    width: 28px;
+  }
+}
+
+.toprightpanel .mdc-switch {
+  width: 28px;
 }

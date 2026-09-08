@@ -11,13 +11,17 @@ describe('LocalStorageServiceService', () => {
   });
 
   it('should be created', () => {
-    expect(service).toBeTruthy();
+    if (!service) {
+      throw new Error('LocalStorageService was not created')
+    }
   });
 
-  it('stores and reads visualisatie preferences', () => {
-    service.set({ key: 'visualisatieFavorites', value: JSON.stringify(['BGT Achtergrond']) });
+  it('stores and reads recent visualisaties', () => {
+    service.set({ key: 'visualisatieRecent', value: JSON.stringify(['BGT Achtergrond']) });
 
-    expect(service.get('visualisatieFavorites')).toBe(JSON.stringify(['BGT Achtergrond']));
+    if (service.get('visualisatieRecent') !== JSON.stringify(['BGT Achtergrond'])) {
+      throw new Error('Recent visualisaties were not stored correctly')
+    }
   });
 
   afterEach(() => {

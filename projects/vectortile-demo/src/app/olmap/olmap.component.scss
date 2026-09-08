@@ -1,23 +1,27 @@
 #map1 {
   z-index: 1;
-  height: var(--mapheight, 99vh);
-  width: var (--mapwidth, 98vw);
-  margin: 0 auto;
+  height: var(--mapheight, 100vh);
+  width: var(--mapwidth, 100vw);
+  margin: 0;
 }
 
 .toprightpanel {
+  box-sizing: border-box;
   position: absolute;
   left: var(--buttonbarleft, 63vw);
   width: var(--buttonbarwidth, 36vw);
   height: var(--buttonxheight, 98vh);
-  top: var(--buttontop, 1vh);
+  top: calc(var(--headertop, 1vh) + (var(--headerheight, 9vh) - var(--topbuttonheight, 2.5rem)) / 2);
   z-index: 4;
 
 }
 
 .topbuttons {
+  align-items: stretch;
   display: flex;
-  min-height: var(--buttonheight, 1vh);
+  gap: 0.5vw;
+  min-height: var(--topbuttonheight, 2.5rem);
+  width: 100%;
 }
 
 .topbutton {
@@ -54,6 +58,9 @@
 .infotextbox {
   text-align: left;
   background-color: white;
+  border: 1px solid #b9bbc8;
+  border-radius: 0.25rem;
+  box-sizing: border-box;
   margin-top: 1em;
   margin-bottom: 1em;
   margin-right: 1em;
@@ -65,6 +72,8 @@
 }
 
 .demobox {
+  background-color: white;
+  border-radius: 0.25rem;
   margin: 1em;
   flex: 1;
   overflow-y:scroll; 
@@ -102,20 +111,21 @@
 
 
 .check {
-
-
-  top: var(--buttontop, 0.5vh);
-  font-size: var(--fontsize, 1vh);
-  font-family: var(--font-family, "Roboto");
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   flex: 1;
-  min-height: var(--buttonheight, 1vh);
-  height: var(--buttonheight, 1vh);
-  width: 100%;
-  text-align: center;
-  margin-top: 0.5vh;
-  margin-left: 0.5vw;
-  margin-right: 0.2vw;
-  background-color: whitesmoke
+  font-family: var(--font-family, "Roboto");
+  font-size: var(--fontsize, 1vh);
+  min-height: var(--topbuttonheight, 2.5rem);
+  height: var(--topbuttonheight, 2.5rem);
+  min-width: 0;
+  margin: 0;
+  padding: 0 0.5rem;
+  background-color: whitesmoke;
+  border: 1px solid #b9bbc8;
+  border-radius: 0.25rem;
+  overflow: hidden;
 }
 
 .legend-view {
@@ -132,8 +142,6 @@
 
 }
 
-.tooltip-class:after {}
-
 .mdc-switch {
   max-width: 3em;
 }
@@ -149,4 +157,12 @@
 .mapuntik{
   background-color: whitesmoke;
 
+}
+
+@media (max-width: 48rem) {
+  .toprightpanel {
+    left: 2vw;
+    top: calc(var(--headertop, 1vh) + (var(--headerheight, 11vh) - var(--topbuttonheight, 2.5rem) - var(--topbuttonheight, 2.5rem) - 0.5vw) / 2 + var(--topbuttonheight, 2.5rem) + 0.5vw);
+    width: 96vw;
+  }
 }

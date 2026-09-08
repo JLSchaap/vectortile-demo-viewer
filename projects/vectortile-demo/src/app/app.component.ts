@@ -50,7 +50,6 @@ export class AppComponent implements OnInit {
   styleurl!: string
   searchTerm = ''
   activeCategory: VisualisatieCategory | 'Alle' = 'Alle'
-  favoriteVisualisaties: Visualisatie[] = []
   recentVisualisaties: Visualisatie[] = []
   readonly categories: Array<VisualisatieCategory | 'Alle'> = [
     'Alle', 'BGT', 'BAG', 'BRT', 'TOP10NL', 'DKK', 'Bestuurlijke gebieden', 'Wkpb', 'Aangepast'
@@ -62,13 +61,16 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.favoriteVisualisaties = this.readStoredVisualisaties('visualisatieFavorites')
     this.recentVisualisaties = this.readStoredVisualisaties('visualisatieRecent')
   }
 
   toggleShow() {
     this.isShow = !this.isShow
     this.visualisatie = getAllVisualisaties()
+  }
+
+  selectCategory(category: VisualisatieCategory | 'Alle'): void {
+    this.activeCategory = category
   }
 
   @HostListener('document:keydown.escape')
@@ -110,24 +112,8 @@ export class AppComponent implements OnInit {
     return Array.from(groups, ([category, options]) => ({ category, options }))
   }
 
-  get favoriteOptions(): VisualisatieOption[] {
-    return this.optionsForValues(this.favoriteVisualisaties)
-  }
-
   get recentOptions(): VisualisatieOption[] {
     return this.optionsForValues(this.recentVisualisaties)
-  }
-
-  isFavorite(vis: Visualisatie): boolean {
-    return this.favoriteVisualisaties.includes(vis)
-  }
-
-  toggleFavorite(vis: Visualisatie, event: Event): void {
-    event.stopPropagation()
-    this.favoriteVisualisaties = this.isFavorite(vis)
-      ? this.favoriteVisualisaties.filter(item => item !== vis)
-      : [...this.favoriteVisualisaties, vis]
-    this.persistVisualisations('visualisatieFavorites', this.favoriteVisualisaties)
   }
 
   trackByVisualisatie(_index: number, option: VisualisatieOption): Visualisatie {
@@ -140,7 +126,7 @@ export class AppComponent implements OnInit {
       .filter((option): option is VisualisatieOption => option !== undefined)
   }
 
-  private readStoredVisualisaties(key: 'visualisatieFavorites' | 'visualisatieRecent'): Visualisatie[] {
+  private readStoredVisualisaties(key: 'visualisatieRecent'): Visualisatie[] {
     const stored = this.localStorageService.get(key)
     if (!stored) return []
     try {
@@ -153,7 +139,7 @@ export class AppComponent implements OnInit {
     }
   }
 
-  private persistVisualisations(key: 'visualisatieFavorites' | 'visualisatieRecent', values: Visualisatie[]): void {
+  private persistVisualisations(key: 'visualisatieRecent', values: Visualisatie[]): void {
     this.localStorageService.set({ key, value: JSON.stringify(values) })
   }
 }
