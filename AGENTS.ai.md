@@ -14,6 +14,7 @@ Angular app. BGT vector tiles. OpenLayers. Local Mapbox styles.
 
 - App: `projects/vectortile-demo/src`.
 - Features: `src/app/{olmap,search,searchnew,objectinfo,mapexport,mapstyler,custom-tile,demobox,location,showlink}`.
+- Browser tests: `cypress/e2e/`; visualisation filters, recent selection, scrolling, TOP10NL, map-width checks.
 - Generated API: `src/app/api/locatieserver/v3/**`. Never edit.
 - Styles/assets: `src/mapboxstyles/**`. Build path: `styles/*`.
 - Environments: `src/environments/{environment.ts,environment.prod.ts}`.
@@ -24,6 +25,8 @@ Angular app. BGT vector tiles. OpenLayers. Local Mapbox styles.
 - `SearchComponent`: calls `DefaultService.suggestGet(...)`; selection calls `LocationService.zoomto(wkt)`.
 - `LocationService`: shared view state. Keep observable/`BehaviorSubject` contract.
 - `OlmapComponent`: observes location; emits `changeView(...)` on `moveend`; sends feature/style to `ObjectinfoComponent`, map to `MapexportComponent`.
+- `AppComponent`: search/category visualisation UI; categories `Alle`, `BGT`, `BAG`, `BRT`, `TOP10NL`, `DKK`, `Bestuurlijke gebieden`, `Wkpb`, `Aangepast`; stores only last 3 recent selections under `visualisatieRecent`; no favorites.
+- `#map1` and OpenLayers canvas: full viewport `100vw` x `100vh`.
 
 ## Commands
 
@@ -33,6 +36,7 @@ Angular app. BGT vector tiles. OpenLayers. Local Mapbox styles.
 - Watch: `npm run watch`.
 - Unit: `npm run ngtest` / `npm run ngtestci`.
 - E2E: `npm run testng` / `npm run e2e`; interactive: `npm run open`.
+- Focused E2E: `npx cypress run --spec cypress/e2e/testvisualisations.cy.ts` with running `npm start`.
 - Lint: `npm run lint`.
 - Styles: `npm run val`; format: `npm run format:styles`.
 - Deploy: `npm run deploy`.
@@ -44,12 +48,16 @@ Angular app. BGT vector tiles. OpenLayers. Local Mapbox styles.
 - Type public members/returns. No new `any`.
 - Keep domain names: `Visualisatie`, `weergavenaam`.
 - Add focused tests for behavior changes.
+- Cypress: use `data-testid`, roles, stable IDs; use `{ force: true }` when moving map layers destabilize clicks.
 - Move/rename styles only with `angular.json` and reference updates.
 - Keep sprite, glyph, source, tile URLs consistent.
 - Endpoint change? Check both environment files.
 - Build has bundle/style budgets.
 - `npm run valbag` points to missing `src/mapboxstyles/bagstd.json`. BAG styles live in `src/mapboxstyles/bag/`. Verify first.
 - `npm run val`: BRK, BGT background/standard, tactile, WKPB. Validate BAG/BRT separately.
+- Project Cypress config has `baseUrl: http://localhost:4200`; root config has no `baseUrl`, so root specs use explicit URLs.
+- Root Cypress editor diagnostics may miss `cy`/`describe` types; root config has no dedicated Cypress `tsconfig`.
+- Keep map sizing `100vw`/`100vh`; `99vmin` and body margins narrow wide-screen canvas or create overflow.
 - npm `agents:update` scripts update `AGENTS.md` only. Use `/update-agents` for both guides.
 
 ## Updating Instructions
