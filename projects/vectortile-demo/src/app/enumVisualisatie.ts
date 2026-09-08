@@ -54,6 +54,13 @@ export enum Visualisatie {
 }
 export type Quad = 'netherlandsrdnewquad' | 'europeanetrs89_laeaquad' | 'webmercatorquad'
 type SourceType = 'bag' | 'bgt' | 'dkk' | 'bestuurlijkegebieden' | 'top10nl' | 'custom' | 'brt' | 'wkpb'
+export type VisualisatieCategory = 'BGT' | 'BAG' | 'BRT' | 'TOP10NL' | 'DKK' | 'Bestuurlijke gebieden' | 'Wkpb' | 'Aangepast'
+
+export type VisualisatieOption = {
+  title: string
+  visualisatie: Visualisatie
+  category: VisualisatieCategory
+}
 
 
 export type StyleUrl = {
@@ -123,8 +130,8 @@ export function exhaustiveGuard(_value: never): never {
   )
 }
 
-export function getAllVisualisaties(): { title: string, visualisatie: Visualisatie }[] {
-  const array: { title: string, visualisatie: Visualisatie }[] = []
+export function getAllVisualisaties(): VisualisatieOption[] {
+  const array: VisualisatieOption[] = []
   const localStorageService = new LocalStorageService()
 
   for (const value of enumKeys(Visualisatie)) {
@@ -132,23 +139,38 @@ export function getAllVisualisaties(): { title: string, visualisatie: Visualisat
 
 
       if (localStorageService.Exists('customUrl')) {
-        array.push({ title: Visualisatie[value], visualisatie: Visualisatie[value] })
+        array.push({ title: Visualisatie[value], visualisatie: Visualisatie[value], category: getVisualisatieCategory(Visualisatie[value]) })
       }
     }
 
     else {
       if (demoSettings.previewFeature) {
-        array.push({ title: Visualisatie[value], visualisatie: Visualisatie[value] })
+        array.push({ title: Visualisatie[value], visualisatie: Visualisatie[value] ,  category: getVisualisatieCategory(Visualisatie[value])})
       } else {
         if (value.includes("Wkpb")) {
           // Wkpb is a preview feature
         } else {
-          array.push({ title: Visualisatie[value], visualisatie: Visualisatie[value] })
+          array.push({ title: Visualisatie[value], visualisatie: Visualisatie[value], category: getVisualisatieCategory(Visualisatie[value]) })
         }
       }
     }
   }
   return array
+}
+
+export function getVisualisatieCategory(vis: Visualisatie): VisualisatieCategory {
+  const source = getStyleUrl(vis, 'netherlandsrdnewquad').source
+  const categories: Record<SourceType, VisualisatieCategory> = {
+    bgt: 'BGT',
+    bag: 'BAG',
+    brt: 'BRT',
+    top10nl: 'TOP10NL',
+    dkk: 'DKK',
+    bestuurlijkegebieden: 'Bestuurlijke gebieden',
+    wkpb: 'Wkpb',
+    custom: 'Aangepast',
+  }
+  return categories[source]
 }
 
 export function getRandomEnumValue<T extends object>(anEnum: T): T[keyof T] {

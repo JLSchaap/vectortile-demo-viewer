@@ -59,3 +59,62 @@ describe('AppComponent with Harnesses', () => {
   });
 });
  */
+
+import { AppComponent } from './app.component'
+import { Visualisatie } from './enumVisualisatie'
+import { LocalStorageService } from './local-storage-service'
+
+describe('AppComponent visualisatie selection', () => {
+  let component: AppComponent
+  let storage: LocalStorageService
+
+  beforeEach(() => {
+    localStorage.clear()
+    storage = new LocalStorageService()
+    component = new AppComponent({} as never, storage)
+    component.ngOnInit()
+  })
+
+  afterEach(() => localStorage.clear())
+
+  it('filters visualisaties by search term and category', () => {
+    component.searchTerm = 'BAG'
+    expect(component.filteredVisualisaties.every(option => option.category === 'BAG')).toBeTrue()
+
+    component.searchTerm = ''
+    component.activeCategory = 'BRT'
+    expect(component.filteredVisualisaties.every(option => option.category === 'BRT')).toBeTrue()
+  })
+
+  it('adds and removes favorites without changing selection', () => {
+    const event = { stopPropagation: () => undefined } as Event
+    component.toggleFavorite(Visualisatie.BGTachtergrond, event)
+
+    expect(component.isFavorite(Visualisatie.BGTachtergrond)).toBeTrue()
+    expect(component.currentVis).toBe(Visualisatie.BGTachtergrond)
+
+    component.toggleFavorite(Visualisatie.BGTachtergrond, event)
+    expect(component.isFavorite(Visualisatie.BGTachtergrond)).toBeFalse()
+  })
+
+  it('keeps the three most recent selections without duplicates', () => {
+    component.onSelect(Visualisatie.BGTstandaard)
+    component.onSelect(Visualisatie.Bagstd)
+    component.onSelect(Visualisatie.BRTStandaardDarkmode_Annotation)
+    component.onSelect(Visualisatie.Bagstd)
+
+    expect(component.recentVisualisaties).toEqual([
+      Visualisatie.Bagstd,
+      Visualisatie.BRTStandaardDarkmode_Annotation,
+      Visualisatie.BGTstandaard,
+    ])
+  })
+
+  it('ignores invalid stored visualisaties', () => {
+    storage.set({ key: 'visualisatieFavorites', value: JSON.stringify(['unknown', Visualisatie.BGTachtergrond]) })
+    const restored = new AppComponent({} as never, storage)
+    restored.ngOnInit()
+
+    expect(restored.favoriteVisualisaties).toEqual([Visualisatie.BGTachtergrond])
+  })
+})

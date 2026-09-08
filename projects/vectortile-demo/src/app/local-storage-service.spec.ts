@@ -13,4 +13,14 @@ describe('LocalStorageServiceService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('stores and reads visualisatie preferences', () => {
+    service.set({ key: 'visualisatieFavorites', value: JSON.stringify(['BGT Achtergrond']) });
+
+    expect(service.get('visualisatieFavorites')).toBe(JSON.stringify(['BGT Achtergrond']));
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
 });

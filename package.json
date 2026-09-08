@@ -26,12 +26,7 @@
     "valbrt": "gl-style-validate projects/vectortile-demo/src/mapboxstyles/brt/*.json",
     "valbrtAFormat": "gl-style-format projects/vectortile-demo/src/mapboxstyles/brt/brt_achtergrondkaart_standaard_nederlandsRDNewQuad.json > projects/vectortile-demo/src/mapboxstyles/brt/brt_achtergrondkaart_standaard_nederlandsRDNewQuad_Formatted.json",
     "runupdate": "ng update  @angular/core @angular/cli @angular/cdk @angular/material",
-    "format:styles": "bash -c 'find projects/vectortile-demo/src/mapboxstyles -type f -name \"*.json\" -not -path \"*/fonts/*\" -not -path \"*/sprite/*\" -exec sh -c \"gl-style-format \\\"{}\\\" > \\\"{}.tmp\\\" && mv \\\"{}.tmp\\\" \\\"{}\\\"\" \\;'",
-    "agents:update": "bash ./scripts/run-copilot-task.sh \"Update AGENTS.md for this repository using current project files. Keep it concise and actionable. Cover tech stack, project structure, layer/dependency connections, build/test/deploy commands, code conventions, and high-risk pitfalls. Only modify AGENTS.md.\"",
-    "agents:update:public": "COPILOT_GITHUB_SCOPE=public-read bash ./scripts/run-copilot-task.sh \"Update AGENTS.md for this repository using current project files. If local repo context is insufficient, you may read GitHub only for public repositories. Keep it concise and actionable. Cover tech stack, project structure, layer/dependency connections, build/test/deploy commands, code conventions, and high-risk pitfalls. Only modify AGENTS.md.\"",
-    "copilot:login": "copilot login",
-    "changelog:update": "bash ./scripts/update-changelog.sh",
-    "changelog:update:full": "CHANGELOG_COMMITS=1000 bash ./scripts/update-changelog.sh"
+    "format:styles": "bash -c 'find projects/vectortile-demo/src/mapboxstyles -type f -name \"*.json\" -not -path \"*/fonts/*\" -not -path \"*/sprite/*\" -exec sh -c \"gl-style-format \\\"{}\\\" > \\\"{}.tmp\\\" && mv \\\"{}.tmp\\\" \\\"{}\\\"\" \\;'"
   },
   "private": true,
   "dependencies": {
